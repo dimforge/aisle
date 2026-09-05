@@ -1,0 +1,56 @@
+# Nexus-engine constants (SCN-2 spirit: no physics constants inline in code).
+# Kept outside the frozen scene directory: these describe how the Nexus
+# backend realizes the frozen scene configuration, not the scene itself.
+
+[sim]
+# Solver substeps per 10 ms step. physics.toml's `substeps = 1` is tuned for
+# Genesis. Boxes resting on a board creep laterally on Nexus's TGS-soft
+# solver at a rate that only the substep count changes (measured on the
+# franka desk, robot holding home): 1 substep 25 mm in 0.3 s, 8 substeps
+# 1.2 mm/s, 16 substeps 0.33 mm/s (6 ms per step). 16 keeps a 30 s episode
+# under the oracle's 30 mm knock threshold; the creep itself is a Nexus
+# solver issue to fix upstream.
+substeps = 16
+# Contact solver: Nexus's defaults (30 Hz soft contacts, 5 mm allowed
+# penetration, one PGS iteration) let the Franka pinch tunnel through a med
+# box on lift. Replaying the recorded T0 grasp (tools/nexus_grasp_replay.py):
+# 120 Hz + 4 PGS held 1/4, 240 Hz + 8 PGS held 2/3; the GPU solver is not
+# run-to-run deterministic, so the pinch is still marginal (ADR-55).
+# Frequencies in Hz, lengths in meters.
+contact_natural_frequency = 240.0
+static_contact_natural_frequency = 480.0
+allowed_linear_error = 0.0005
+internal_pgs_iterations = 8
+
+[ground]
+# Nexus has no infinite plane primitive; the ground is a fixed slab whose
+# top face sits at z = 0.
+size = [20.0, 20.0, 0.1]
+friction = 1.0
+
+[robot]
+# Genesis's URDF defaults (`default_dofs_kp` / `default_dofs_kv`): joints
+# without an explicit profile gain get these. MJCF position actuators keep
+# the gains declared in the model, as in Genesis.
+default_kp = 100.0
+default_kv = 10.0
+# Per-DoF reflected rotor inertia and viscous damping given to URDF joints,
+# which declare neither (MJCF models carry their own). A light arm without
+# them has no stable PD hold on the GPU solver; these are the values the
+# official SO-101 MJCF uses for its STS3215 servos.
+default_armature = 0.01
+default_damping = 0.1
+# Robot mesh colliders: a convex hull per mesh (Genesis's `convexify`).
+convex_hull = true
+
+[camera]
+znear = 0.01
+zfar = 50.0
+# Sky color behind the geometry; depth reads 0.0 there, as Genesis's
+# rasterizer returns the far plane only where nothing is hit.
+background_rgba = [0.85, 0.87, 0.9, 1.0]
+
+[light]
+# One directional light on the shared scene graph, pointing down at the
+# workspace of the Z-up scene.
+direction = [0.3, -0.4, -1.0]

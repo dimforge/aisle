@@ -864,3 +864,159 @@ def test_authored_work_binding_is_refused(tmp_path):
         instrumented_graph(
             graph, REPO_ROOT, tmp_path, graph_snapshot=yaml.safe_dump(doc).encode(), work_launch=0
         )
+
+
+# -- HAR-1 operator progress ----------------------------------------------------
+
+
+def test_progress_report_distinguishes_build_from_running_episode():
+    """HAR-1 (operator feedback), CON-8 (stdout stays JSON): the periodic
+    stderr line names the phase — scene build before the first trace byte,
+    the running episode against its wall budget after — plus the last
+    verdict and the run deadline, so a long build reads differently from a
+    wedged episode."""
+    from aisle.harness.rollout import progress_report
+
+    building = progress_report(
+        now=100.0,
+        started=10.0,
+        deadline=1000.0,
+        lines=0,
+        episodes=2,
+        seeds=[0, 1],
+        last_line_t=10.0,
+        episode_grace_s=660.0,
+        traces_size=0,
+        last_record=None,
+    )
+    assert building.startswith("[rollout +1m30s]")
+    assert "episode 1/2 (seed 0): building the scene, no traces yet (1m30s)" in building
+    assert building.endswith("run deadline in 15m00s")
+
+    running = progress_report(
+        now=200.0,
+        started=10.0,
+        deadline=1000.0,
+        lines=1,
+        episodes=2,
+        seeds=[0, 1],
+        last_line_t=150.0,
+        episode_grace_s=240.0,
+        traces_size=3_100_000,
+        last_record={"episode": 0, "seed": 0, "status": "success", "failure": None, "t_end": 20.83},
+        relaunches=1,
+    )
+    assert "episode 2/2 (seed 1) running 50s of 4m00s wall budget, traces 3.1 MB" in running
+    assert "last: episode 0 seed 0 success at t=20.8s" in running
+    assert "relaunches 1" in running
+
+    failed = progress_report(
+        now=200.0,
+        started=10.0,
+        deadline=1000.0,
+        lines=2,
+        episodes=2,
+        seeds=[0, 1],
+        last_line_t=150.0,
+        episode_grace_s=240.0,
+        traces_size=10,
+        last_record={
+            "episode": 1,
+            "seed": 1,
+            "status": "fail",
+            "failure": "collision",
+            "t_end": 0.3,
+        },
+    )
+    assert "all 2 episodes recorded, waiting for the client to exit" in failed
+    assert "fail (collision) at t=0.3s" in failed
+
+
+def test_progress_interval_env_override():
+    """HAR-1: AISLE_ROLLOUT_PROGRESS_S sets the cadence, 0 disables, and a
+    malformed value is refused rather than silently muting the report."""
+    from aisle.harness.rollout import PROGRESS_INTERVAL_S, progress_interval_s
+
+    assert progress_interval_s({}) == PROGRESS_INTERVAL_S
+    assert progress_interval_s({"AISLE_ROLLOUT_PROGRESS_S": "5"}) == 5.0
+    assert progress_interval_s({"AISLE_ROLLOUT_PROGRESS_S": "0"}) == 0.0
+    with pytest.raises(ValueError, match="AISLE_ROLLOUT_PROGRESS_S"):
+        progress_interval_s({"AISLE_ROLLOUT_PROGRESS_S": "soon"})
+
+
+def test_timing_summary_weights_windows_and_reports_rtf():
+    """ADR-55: the manifest's `sim_timing` is the step- and frame-weighted
+    aggregate of the bridge's sidecar rows, with the real-time factor as sim
+    seconds over wall seconds spent stepping and rendering; the progress
+    phrase renders it compactly and omits what the engine did not report."""
+    from aisle.harness.rollout import summarize_timing, timing_phrase
+
+    rows = [
+        {
+            "engine": "nexus",
+            "steps": 100,
+            "step_ms_mean": 6.0,
+            "step_ms_max": 9.0,
+            "frames": 15,
+            "tick_ms_mean": 6.0,
+            "render_ms_mean": 2.0,
+            "gpu_ms_mean": 5.0,
+            "sim_window_s": 1.0,
+        },
+        {
+            "engine": "nexus",
+            "steps": 100,
+            "step_ms_mean": 8.0,
+            "step_ms_max": 12.0,
+            "frames": 15,
+            "tick_ms_mean": 8.0,
+            "render_ms_mean": 4.0,
+            "gpu_ms_mean": None,
+            "sim_window_s": 1.0,
+        },
+    ]
+    summary = summarize_timing(rows)
+    assert summary["steps"] == 200 and summary["frames"] == 30
+    assert summary["step_ms_mean"] == pytest.approx(7.0)
+    assert summary["step_ms_max"] == 12.0
+    assert summary["render_ms_mean"] == pytest.approx(3.0)
+    assert summary["tick_ms_mean"] == pytest.approx(7.0)
+    assert summary["gpu_ms_mean"] == pytest.approx(5.0)  # only the window that reported it
+    # 2 sim seconds over 1.4 s of stepping + 0.09 s of rendering
+    assert summary["rtf"] == pytest.approx(2.0 / (1.4 + 0.09), rel=1e-6)
+    assert (
+        timing_phrase(summary)
+        == "physics 7.0 ms/step, tick 7.0 ms, gpu 5.0 ms, render 3.0 ms/frame, rtf 1.34x"
+    )
+    genesis = summarize_timing(
+        [{**rows[1], "engine": "genesis", "frames": 0, "render_ms_mean": None}]
+    )
+    assert genesis["gpu_ms_mean"] is None and genesis["render_ms_mean"] is None
+    assert timing_phrase(genesis) == "physics 8.0 ms/step, tick 8.0 ms, rtf 1.25x"
+    assert summarize_timing([]) == {} and timing_phrase({}) == ""
+
+
+def test_build_grace_is_a_cli_choice(tmp_path):
+    """HAR-1: the first-episode build grace defaults to the Genesis build
+    budget and is overridden per run (`--build-grace-s`), never inferred; a
+    negative value is refused before anything launches."""
+    import inspect
+
+    from aisle.harness.rollout import GENESIS_BUILD_BUDGET_S, rollout
+
+    assert inspect.signature(rollout).parameters["build_grace_s"].default is None
+    assert GENESIS_BUILD_BUDGET_S == 420
+    refused = rollout(
+        root=tmp_path,
+        graph=REPO_ROOT / "graphs" / "expert_t0.yaml",
+        tier="T0",
+        episodes=1,
+        seeds=[0],
+        reset_mode="teleport",
+        verifier="oracle",
+        run_id="grace",
+        branch="b",
+        no_idea_gate=True,
+        build_grace_s=-1,
+    )
+    assert refused["ok"] is False and "build_grace_s" in refused["error"]

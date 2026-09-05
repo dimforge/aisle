@@ -176,6 +176,8 @@ def test_bridge_info_shape():
         "perception": "L0",
         "segmentation_ids": {},
         "sim_backend": "metal",
+        # ADR-55: the engine that realized the scene, default genesis
+        "sim_engine": "genesis",
     }
     assert info["platform"]
     assert info["calibration"]["calibration_version"] == 1
@@ -198,6 +200,16 @@ def test_bridge_config_from_env():
 
     with pytest.raises(ValueError, match="simulation backend"):
         parse_bridge_config({"AISLE_SIM_BACKEND": "auto"})
+    # ADR-55: the engine is graph-declared like the rung; unknown names and
+    # backends the engine cannot run are refused, never defaulted
+    assert parse_bridge_config({}).sim_engine == "genesis"
+    assert parse_bridge_config({"AISLE_SIM_ENGINE": "nexus"}).sim_engine == "nexus"
+    nexus_cfg = parse_bridge_config({"AISLE_SIM_ENGINE": "nexus", "AISLE_SIM_BACKEND": "webgpu"})
+    assert (nexus_cfg.sim_engine, nexus_cfg.sim_backend) == ("nexus", "webgpu")
+    with pytest.raises(ValueError, match="simulation engine"):
+        parse_bridge_config({"AISLE_SIM_ENGINE": "bullet"})
+    with pytest.raises(ValueError, match="simulation backend"):
+        parse_bridge_config({"AISLE_SIM_ENGINE": "genesis", "AISLE_SIM_BACKEND": "webgpu"})
 
 
 def test_step_without_reset_defaults_off():
@@ -594,3 +606,68 @@ def test_l1_refuses_an_unusable_segmentation_id_map():
         require_usable_segmentation_ids({"amoxicillin": [], "ibuprofen": [17]}, "L1")
     # below L1 there is no map to require: L0 publishes ground truth instead
     require_usable_segmentation_ids({}, "L0")
+
+
+# -- ADR-55: timing sidecar ---------------------------------------------------
+
+
+def test_step_timer_flushes_windows_with_engine_gpu_time(tmp_path):
+    """ADR-55 / BRG-6 (recorded-vs-actual): the bridge's timing sidecar
+    carries per-window step wall time, render wall time, sim seconds and the
+    engine's GPU time when reported, so a run's performance is comparable
+    across engines without a new topic (SPEC 010 untouched)."""
+    from pathlib import Path
+
+    from aisle.nodes.dora_genesis import StepTimer, timing_sidecar_path
+
+    path = tmp_path / "sim_timing.jsonl"
+    timer = StepTimer("nexus", path, flush_every=3, clock=lambda: 0.0)
+    timer.record_step(0.004, 10_000_000, {"gpu_ms": 3.0}, tick_s=0.010)
+    timer.record_render(0.002)
+    timer.record_step(0.006, 20_000_000, None, tick_s=0.011)
+    timer.record_step(0.008, 30_000_000, {"gpu_ms": 5.0})
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["engine"] == "nexus" and row["steps"] == 3 and row["frames"] == 1
+    assert row["step_ms_mean"] == pytest.approx(6.0) and row["step_ms_max"] == pytest.approx(8.0)
+    # the third step gave no tick time, so its step time stands in for it
+    assert row["tick_ms_mean"] == pytest.approx((10.0 + 11.0 + 8.0) / 3)
+    assert row["render_ms_mean"] == pytest.approx(2.0)
+    assert row["gpu_ms_mean"] == pytest.approx(4.0)  # over the steps that reported gpu time
+    assert row["sim_window_s"] == pytest.approx(0.02) and row["sim_time_s"] == pytest.approx(0.03)
+    # a window without renders or gpu reports leaves those null, never zero
+    timer.record_step(0.001, 40_000_000)
+    assert timer.flush(40_000_000)["render_ms_mean"] is None
+    assert timer.rows[-1]["gpu_ms_mean"] is None
+    # no results path (hand-launched graph): no sidecar
+    assert timing_sidecar_path({}) is None
+    assert timing_sidecar_path({"AISLE_RESULTS": "/runs/x/episodes.jsonl"}) == Path(
+        "/runs/x/sim_timing.jsonl"
+    )
+
+
+def test_debug_view_is_off_by_default_and_parses_presets():
+    """ADR-55 operator tooling: AISLE_DEBUG_VIEW adds a camera that feeds
+    debug_view.mp4 only (no topic, SPEC 010 untouched): unset means none,
+    `side` looks at the shelf front from the tray side, an explicit
+    `eye;lookat` pair is honored, and a malformed value is refused."""
+    from aisle.nodes.dora_genesis import parse_debug_view
+    from aisle.scenes.pharmacy import load_physics, resolve_layout
+
+    layout = resolve_layout(load_physics(), "franka")
+    assert parse_debug_view({}, layout) is None
+    assert parse_debug_view({"AISLE_DEBUG_VIEW": ""}, layout) is None
+    eye, lookat = parse_debug_view({"AISLE_DEBUG_VIEW": "side"}, layout)
+    shelf_front_x = layout["shelf"]["pos"][0] - layout["shelf"]["level_size"][0] / 2
+    assert eye[0] < shelf_front_x < lookat[0]  # outside the shelf, looking into it
+    assert eye[1] < layout["tray"]["pos"][1]  # from beyond the tray side
+    assert eye[2] > lookat[2] > 0.0
+    assert parse_debug_view({"AISLE_DEBUG_VIEW": "1,-1,0.5;0.5,0,0.3"}, layout) == (
+        [1.0, -1.0, 0.5],
+        [0.5, 0.0, 0.3],
+    )
+    with pytest.raises(ValueError, match="AISLE_DEBUG_VIEW"):
+        parse_debug_view({"AISLE_DEBUG_VIEW": "sideways"}, layout)
+    with pytest.raises(ValueError, match="AISLE_DEBUG_VIEW"):
+        parse_debug_view({"AISLE_DEBUG_VIEW": "1,2;3,4"}, layout)

@@ -75,6 +75,19 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["sim", "cuda"],
         help="attested dependency/backend selection: portable sim or Linux CUDA",
     )
+    roll.add_argument(
+        "--sim-engine",
+        default="genesis",
+        choices=["genesis", "nexus"],
+        help="physics engine realizing the scene (ADR-55): genesis (default) or nexus",
+    )
+    roll.add_argument(
+        "--build-grace-s",
+        type=int,
+        default=None,
+        help="scene-build wall grace added to the first episode of each launch "
+        "(default 420 s, sized for Genesis; a Nexus scene builds in seconds)",
+    )
     roll.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     roll.add_argument(
         "--no-idea-gate",
@@ -852,6 +865,8 @@ def main() -> int:
             perception=args.perception,
             sim_extra=args.sim_extra,
             per_episode_wall_s=args.per_episode_wall_s,
+            sim_engine=args.sim_engine,
+            build_grace_s=args.build_grace_s,
         )
         return emit_report(report, lambda level, e: f"rollout {level}: {e}")
 

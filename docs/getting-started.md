@@ -109,6 +109,32 @@ uv run --extra sim --locked harness rollout --graph graphs/expert_t0.yaml --tier
   overrides (both recorded in the run manifest). Research agents run
   without them: rollouts then require an open idea-tree entry (HAR-8)
   and a trusted frozen-set baseline (ADR-21).
+- While the run waits on dora, a progress line goes to stderr every 15 s:
+  the phase (scene build before the first trace byte, then the running
+  episode against its wall budget), the last verdict, and the run deadline.
+  `AISLE_ROLLOUT_PROGRESS_S` changes the cadence; `0` silences it. Stdout
+  stays the single JSON report (CON-8). Once physics runs, the line also
+  carries the recent performance: wall time of the physics step call and of
+  the whole bridge tick (the step plus the state reads that block on the
+  GPU, which is the honest cost when the step call is an asynchronous
+  submit), the engine's GPU time per step when it reports one (Nexus does,
+  Genesis does not), render time per frame, and the real-time factor.
+- The bridge writes those numbers per 100-step window to
+  `runs/<run-id>/sim_timing.jsonl`, and the manifest's `sim_timing` block
+  aggregates them over the run, so two engines can be compared on the same
+  graph and seeds.
+- The per-episode wall clamp is the tier's budget (150 s for T0/T1) plus a
+  scene-build grace on the first episode of a launch (default 420 s, sized
+  for Genesis: 9m30s for T0). `--per-episode-wall-s N` overrides the tier
+  budget and `--build-grace-s N` the grace; a Nexus scene builds in seconds,
+  so `--build-grace-s 60` clamps a wedged Nexus episode in about a minute
+  past its tier budget.
+- `AISLE_DEBUG_VIEW=side` (Nexus only: Genesis fixes its cameras at build)
+  adds an operator camera looking at the shelf front from the tray side and
+  writes `runs/<run-id>/debug_view.mp4` at 10 fps, useful for seeing a grasp
+  slip in profile. `AISLE_DEBUG_VIEW=px,py,pz;lx,ly,lz` sets an explicit eye
+  and look-at in the base frame. The recorded traces and `overhead.mp4` are
+  unchanged: this camera is not a topic.
 - Results land in `runs/<run-id>/`: per-episode results JSON, Arrow
   traces, and videos. `runs/` is gitignored; every run is reproducible
   from (graph hash, env hash, seed list) (CON-5).
@@ -123,6 +149,48 @@ Sim runs want the machine to themselves — close other GPU/CPU-heavy
 work, and see `docs/troubleshooting.md` if runs behave strangely
 (leaked simulator processes from a previous killed run are the most
 common cause).
+
+## 3b. Optional: run the scene on the Nexus engine (ADR-55)
+
+Genesis is the default and the only engine behind the measured record. The
+same graphs can run on [Nexus](https://github.com/dimforge/nexus) (GPU
+rigid bodies, Metal on macOS) for development: the bridge picks the engine
+from `AISLE_SIM_ENGINE`, which `harness rollout --sim-engine nexus` injects
+into the bridge node and records in the manifest. Results are not
+comparable across engines.
+
+Nexus is not part of the lock. Build its Python module from sibling
+checkouts: nexus on its `aisle-backend` branch, whose manifest patches the
+rapier crates to a rapier checkout on `fix-urdf-rpy` (URDF roll-pitch-yaw
+fix) and kiss3d to a kiss3d checkout on `fix-shared-window-managers`
+(offscreen sensor surfaces). Then install the wheel into the project
+environment:
+
+```bash
+uv run --extra sim --locked python tools/nexus_runtime.py install --nexus ../nexus --rapier ../rapier --kiss3d ../kiss3d
+```
+
+The installer builds with `maturin` (`--features metal` on macOS), installs
+the wheel with `uv pip`, and writes a receipt with the source commits. Then:
+
+```bash
+uv run --extra sim --locked pytest -m sim tests/sim/test_nexus_scene.py
+```
+
+```bash
+uv run --extra sim --locked harness rollout --graph graphs/expert_t0.yaml --tier T0 \
+    --episodes 2 --seeds 0..1 --no-idea-gate --env-baseline local --sim-engine nexus
+```
+
+Plain `uv sync` removes the wheel (it is not in the lock); reinstall with the
+command above. `AISLE_SIM_BACKEND` accepts `metal`, `webgpu`, `cuda` or `cpu`
+for Nexus, matching the features the wheel was built with.
+
+The solver settings Nexus needs for the pick-and-place (substeps, contact
+stiffness, PGS iterations) live in `src/aisle/sim/nexus_physics.toml`;
+`tools/nexus_grasp_replay.py --run runs/<id>` replays a recorded run's joint
+and gripper commands into a fresh Nexus scene under overrides, which is how
+those values were chosen and how a grasp regression is reproduced offline.
 
 ## 4. Where to go next
 

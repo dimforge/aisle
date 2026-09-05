@@ -187,7 +187,7 @@ stayed outside it).
 | `harness probe` | `--dataflow`, `--topic`, `--for`, `--root` |
 | `harness report close` | `--id`, `--observed`, `--verdict`, `--root` |
 | `harness report log` | `--idea`, `--parent`, `--expect`, `--root` |
-| `harness rollout` | `--graph`, `--tier`, `--embodiment`, `--episodes`, `--seeds`, `--reset`, `--verifier`, `--sim-extra`, `--root`, `--no-idea-gate`, `--perception`, `--run-id`, `--per-episode-wall-s`, `--env-baseline`, `--timeout-s` |
+| `harness rollout` | `--graph`, `--tier`, `--embodiment`, `--episodes`, `--seeds`, `--reset`, `--verifier`, `--sim-extra`, `--sim-engine`, `--build-grace-s`, `--root`, `--no-idea-gate`, `--perception`, `--run-id`, `--per-episode-wall-s`, `--env-baseline`, `--timeout-s` |
 | `harness semantic corpus` | `--seed`, `--per-condition`, `--output` |
 | `harness semantic run` | `--corpus`, `--analysis-seed`, `--output` |
 | `harness skill register` | `<skill_dir>`, `--root`, `--sandbox`, `--run-id` |
@@ -260,7 +260,7 @@ inference.
 | [docs/decisions/ADR-52.md](../decisions/ADR-52.md) | ADR-52 — One frozen `actuation-gateway` owns driver authority | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
 | [docs/decisions/ADR-53.md](../decisions/ADR-53.md) | ADR-53 — Safety evidence uses exact exposures and fixed proposals | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
 | [docs/decisions/ADR-54.md](../decisions/ADR-54.md) | ADR-54 — Semantic prevention requires a separate trusted authorizer | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
-| [docs/decisions/ADR-55.md](../decisions/ADR-55.md) | ADR-55 — Select two non-oracle tasks by blinded unscored pilots | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
+| [docs/decisions/ADR-55.md](../decisions/ADR-55.md) | ADR-55: a second physics engine (Nexus) behind the scene contract | ACCEPTED (development); a spec-change PR is still owed (see below). |
 | [docs/decisions/ADR-56.md](../decisions/ADR-56.md) | ADR-56 — Use a replicated block-randomized session trial for H4 | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
 | [docs/decisions/ADR-57.md](../decisions/ADR-57.md) | ADR-57 — Compare diagnostic evidence with sealed paired fault sessions | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
 | [docs/decisions/ADR-58.md](../decisions/ADR-58.md) | ADR-58 — Hardware evidence begins at a pinned physical station | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |

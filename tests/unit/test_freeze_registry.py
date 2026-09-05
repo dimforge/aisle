@@ -451,7 +451,7 @@ def test_confirmatory_registrations_carry_a_refused_freeze():
         assert "independent statistical review" in refusal["errors"][0]
 
 
-@pytest.mark.parametrize("previous_version,current_version", [(6, 7), (7, 8)])
+@pytest.mark.parametrize("previous_version,current_version", [(6, 7), (7, 8), (8, 9), (9, 10)])
 def test_hardened_perception_registration_requires_a_new_audit(previous_version, current_version):
     """BND-5/BND-12: a changed auditor cannot inherit a passed historical audit."""
     root = REPO_ROOT / "analysis/freeze"

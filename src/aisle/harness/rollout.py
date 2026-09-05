@@ -41,6 +41,10 @@ GENESIS_BUILD_BUDGET_S = 420
 PER_EPISODE_BUDGET_S = 150
 PRE_DATA_STALL_S = 600
 STALL_S = 180
+# Operator progress cadence on stderr while a run waits on dora (HAR-1). CON-8
+# keeps stdout JSON-only, so this never touches stdout. AISLE_ROLLOUT_PROGRESS_S
+# overrides it; 0 disables.
+PROGRESS_INTERVAL_S = 15.0
 # retail tiers (RS-6, ADR-18): store-sim rtf ~0.1 on the dev machine — the
 # fixed-seed S1 episode runs ~101.5 sim s / ~25 wall min plus a ~2.5 min
 # store build (first green run: 28:39 total). The desk budgets above would
@@ -151,13 +155,191 @@ def compute_metrics(episodes: list[dict]) -> dict:
     }
 
 
-def resolve_sim_identity(sim_extra: str) -> dict:
+def progress_interval_s(env: dict | None = None) -> float:
+    """The stderr progress cadence: AISLE_ROLLOUT_PROGRESS_S (seconds, 0 or a
+    negative value disables), else PROGRESS_INTERVAL_S. Malformed values are
+    refused loudly rather than silently muting the report."""
+    raw = (os.environ if env is None else env).get("AISLE_ROLLOUT_PROGRESS_S")
+    if raw is None or not str(raw).strip():
+        return PROGRESS_INTERVAL_S
+    try:
+        return float(raw)
+    except ValueError as exc:
+        raise ValueError(
+            f"AISLE_ROLLOUT_PROGRESS_S must be a number of seconds, got {raw!r}"
+        ) from exc
+
+
+def _hms(seconds: float) -> str:
+    seconds = max(0, int(seconds))
+    if seconds >= 3600:
+        return f"{seconds // 3600}h{(seconds % 3600) // 60:02d}m"
+    if seconds >= 60:
+        return f"{seconds // 60}m{seconds % 60:02d}s"
+    return f"{seconds}s"
+
+
+def progress_report(
+    *,
+    now: float,
+    started: float,
+    deadline: float,
+    lines: int,
+    episodes: int,
+    seeds: list[int],
+    last_line_t: float,
+    episode_grace_s: float,
+    traces_size: int,
+    last_record: dict | None,
+    relaunches: int = 0,
+    timing: dict | None = None,
+) -> str:
+    """One human-readable progress line for stderr while the run waits on
+    dora (HAR-1 operator feedback). Before the first trace byte the scene is
+    still building; afterwards it names the running episode, how long it has
+    run against its per-episode wall budget, the last verdict, and the run
+    deadline, so an operator can tell a long build from a wedged episode
+    without reading the traces."""
+    elapsed = now - started
+    head = f"[rollout +{_hms(elapsed)}]"
+    if lines >= episodes:
+        phase = f"all {episodes} episodes recorded, waiting for the client to exit"
+    else:
+        seed = seeds[lines] if lines < len(seeds) else None
+        seed_txt = f" (seed {seed})" if seed is not None else ""
+        running = now - last_line_t
+        if traces_size <= 0:
+            phase = (
+                f"episode {lines + 1}/{episodes}{seed_txt}: building the scene, "
+                f"no traces yet ({_hms(running)})"
+            )
+        else:
+            phase = (
+                f"episode {lines + 1}/{episodes}{seed_txt} running {_hms(running)} "
+                f"of {_hms(episode_grace_s)} wall budget, traces {traces_size / 1e6:.1f} MB"
+            )
+    parts = [head, phase]
+    if last_record:
+        status = last_record.get("status", "?")
+        failure = last_record.get("failure")
+        verdict = status if not failure else f"{status} ({failure})"
+        t_end = last_record.get("t_end")
+        t_txt = f" at t={float(t_end):.1f}s" if isinstance(t_end, (int, float)) else ""
+        episode, seed = last_record.get("episode", "?"), last_record.get("seed", "?")
+        parts.append(f"last: episode {episode} seed {seed} {verdict}{t_txt}")
+    if relaunches:
+        parts.append(f"relaunches {relaunches}")
+    phrase = timing_phrase(timing or {})
+    if phrase:
+        parts.append(phrase)
+    parts.append(f"run deadline in {_hms(deadline - now)}")
+    return f"{parts[0]} " + "; ".join(parts[1:])
+
+
+def summarize_timing(rows: list[dict]) -> dict:
+    """Aggregate the bridge's timing sidecar (`sim_timing.jsonl`, one row per
+    window of steps) into run-level means, weighted by step and frame counts:
+    physics wall time per step, engine GPU time per step where the engine
+    reports it, render wall time per frame, and the real-time factor (sim
+    seconds per wall second spent stepping and rendering). Empty when there
+    is nothing to aggregate."""
+    steps = sum(int(r.get("steps", 0)) for r in rows)
+    frames = sum(int(r.get("frames", 0)) for r in rows)
+    if steps <= 0:
+        return {}
+    step_wall = sum(float(r.get("step_ms_mean") or 0.0) * int(r.get("steps", 0)) for r in rows)
+    tick_wall = sum(
+        float(r.get("tick_ms_mean") or r.get("step_ms_mean") or 0.0) * int(r.get("steps", 0))
+        for r in rows
+    )
+    gpu_rows = [r for r in rows if r.get("gpu_ms_mean") is not None]
+    gpu_steps = sum(int(r.get("steps", 0)) for r in gpu_rows)
+    gpu_wall = sum(float(r["gpu_ms_mean"]) * int(r.get("steps", 0)) for r in gpu_rows)
+    render_wall = sum(float(r.get("render_ms_mean") or 0.0) * int(r.get("frames", 0)) for r in rows)
+    sim_s = sum(float(r.get("sim_window_s") or 0.0) for r in rows)
+    wall_s = (tick_wall + render_wall) / 1000.0
+    out = {
+        "engine": rows[-1].get("engine"),
+        "steps": steps,
+        "frames": frames,
+        "step_ms_mean": step_wall / steps,
+        "step_ms_max": max(float(r.get("step_ms_max") or 0.0) for r in rows),
+        "tick_ms_mean": tick_wall / steps,
+        "render_ms_mean": (render_wall / frames) if frames else None,
+        "gpu_ms_mean": (gpu_wall / gpu_steps) if gpu_steps else None,
+        "rtf": (sim_s / wall_s) if wall_s > 0 else None,
+    }
+    return out
+
+
+def read_timing_rows(run_dir: Path) -> list[dict]:
+    """The bridge's timing sidecar rows under `run_dir` (every launch's), or
+    an empty list when the bridge wrote none."""
+    rows: list[dict] = []
+    for path in sorted(run_dir.rglob("sim_timing.jsonl")):
+        for line in path.read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return rows
+
+
+def timing_phrase(summary: dict) -> str:
+    """The performance clause of a progress line: wall time of the physics
+    step call and of the whole tick (step plus the state reads that sync the
+    GPU), GPU time per step when the engine reports it, render time per frame,
+    and the real-time factor."""
+    if not summary:
+        return ""
+    parts = [f"physics {summary['step_ms_mean']:.1f} ms/step"]
+    if summary.get("tick_ms_mean") is not None:
+        parts.append(f"tick {summary['tick_ms_mean']:.1f} ms")
+    if summary.get("gpu_ms_mean") is not None:
+        parts.append(f"gpu {summary['gpu_ms_mean']:.1f} ms")
+    if summary.get("render_ms_mean") is not None:
+        parts.append(f"render {summary['render_ms_mean']:.1f} ms/frame")
+    if summary.get("rtf") is not None:
+        parts.append(f"rtf {summary['rtf']:.2f}x")
+    return ", ".join(parts)
+
+
+def _last_record(raw: bytes) -> dict | None:
+    """The last parseable episode row of a results file, or None."""
+    for line in reversed(raw.splitlines()):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            return json.loads(line)
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
+def resolve_sim_identity(sim_extra: str, sim_engine: str = "genesis") -> dict:
     """Resolve the requested lock extra to a fail-closed backend/device.
 
     CON-5 requires this live hardware fact to ride with the run identity;
     the portable ``sim`` selection deliberately never probes into CUDA.
+    sim_engine (ADR-55) picks whose backend table answers; an engine whose
+    package is not installed refuses here, before anything launches.
     """
-    from aisle.scenes.pharmacy import select_genesis_backend
+    from aisle.sim import engine_available, normalize_engine, select_sim_backend
+
+    try:
+        sim_engine = normalize_engine(sim_engine)
+    except ValueError as exc:
+        return {"ok": False, "gate": "sim_engine", "detail": str(exc)}
+    if not engine_available(sim_engine):
+        return {
+            "ok": False,
+            "gate": "sim_engine",
+            "detail": f"simulation engine {sim_engine!r} is not installed in this environment",
+        }
 
     system = platform_module.system()
     cuda_available = False
@@ -183,12 +365,13 @@ def resolve_sim_identity(sim_extra: str) -> dict:
                 "detail": f"cannot inspect the requested CUDA device: {exc}",
             }
     try:
-        backend = select_genesis_backend(sim_extra, system, cuda_available)
+        backend = select_sim_backend(sim_engine, sim_extra, system, cuda_available)
     except ValueError as exc:
         return {"ok": False, "gate": "sim_backend", "detail": str(exc)}
     return {
         "ok": True,
         "sim_extra": sim_extra,
+        "sim_engine": sim_engine,
         "sim_backend": backend,
         "sim_device": device,
     }
@@ -398,6 +581,7 @@ def run_gates(
     sim_extra: str = "sim",
     graph_snapshot: bytes | None = None,
     typed_stage: tuple[Path, dict] | None = None,
+    sim_engine: str = "genesis",
 ) -> dict:
     """HAR-2: refuse on env-hash mismatch (TRUSTED baseline by default,
     ADR-21: the baseline commit is fetched from the remote SERVER and
@@ -418,7 +602,7 @@ def run_gates(
             "'origin/main', a full campaign-pinned main-history OID, or the "
             "logged dev override 'local' are accepted (ADR-21, issue #91)",
         }
-    sim_identity = resolve_sim_identity(sim_extra)
+    sim_identity = resolve_sim_identity(sim_extra, sim_engine)
     if not sim_identity["ok"]:
         return sim_identity
     baseline_oid = None
@@ -637,6 +821,7 @@ def instrumented_graph(
     graph_snapshot: bytes | None = None,
     typed_stage: tuple[Path, dict] | None = None,
     work_launch: int | None = None,
+    sim_engine: str | None = None,
 ) -> Path:
     """The input graph plus a trace-recorder node (HAR-4) with absolutized
     node paths, written under the run dir (dora's cwd becomes the run dir,
@@ -703,6 +888,10 @@ def instrumented_graph(
         for node in doc["nodes"]:
             if node["id"] in bridge_ids:
                 node["env"] = {**(node.get("env") or {}), "AISLE_SIM_BACKEND": sim_backend}
+    if sim_engine is not None:
+        for node in doc["nodes"]:
+            if node["id"] in bridge_ids:
+                node["env"] = {**(node.get("env") or {}), "AISLE_SIM_ENGINE": sim_engine}
     forbidden = FORBIDDEN_BY_RUNG.get(rung, ())
     # HAR-4: EVERY declared endpoint, keyed <producer>__<topic> so two
     # producers of the same topic name (e.g. reset_done from both the
@@ -1076,8 +1265,16 @@ def rollout(
     per_episode_wall_s: int | None = None,
     typed_stage_factory=None,
     record_simulator_work: bool = False,
+    sim_engine: str = "genesis",
+    build_grace_s: int | None = None,
 ) -> dict:
-    """HAR-1: the full run. Returns the report dict (CON-8: caller emits)."""
+    """HAR-1: the full run. Returns the report dict (CON-8: caller emits).
+
+    build_grace_s is the scene-build wall grace the first episode of every
+    launch gets on top of its per-episode budget (and that each launch adds
+    to the run budget); default GENESIS_BUILD_BUDGET_S, sized for Genesis's
+    minutes-long build. Pass a smaller value for an engine that builds in
+    seconds so a wedged first episode clamps sooner (`--build-grace-s`)."""
     # A relative root (`--root .`) must be pinned to THIS process's cwd:
     # dora runs with cwd = the run dir, so relative AISLE_RESULTS /
     # AISLE_TRACE_DIR strings would resolve to a nested runs/<id>/runs/<id>/
@@ -1085,6 +1282,8 @@ def rollout(
     root = root.resolve()
     if reset_mode not in ("teleport", "behavioral"):
         return {"ok": False, "error": f"unknown reset mode {reset_mode!r}"}
+    if build_grace_s is not None and build_grace_s < 0:
+        return {"ok": False, "error": f"build_grace_s must be >= 0, got {build_grace_s}"}
     if verifier not in ("oracle", "both", "realistic"):
         return {"ok": False, "error": f"unknown verifier {verifier!r}"}
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", run_id):
@@ -1152,6 +1351,7 @@ def rollout(
         sim_extra,
         graph_snapshot=graph_snapshot,
         **({"typed_stage": typed_stage} if typed_stage is not None else {}),
+        sim_engine=sim_engine,
     )
     if not gates["ok"]:
         return {
@@ -1232,6 +1432,7 @@ def rollout(
             **({"work_launch": 0} if record_simulator_work else {}),
             graph_snapshot=graph_snapshot,
             **({"typed_stage": typed_stage} if typed_stage is not None else {}),
+            sim_engine=gates.get("sim_engine", "genesis"),
         )
     except RuntimeError as exc:
         return {
@@ -1264,6 +1465,8 @@ def rollout(
             # CON-5: the gate resolved this from the explicitly selected,
             # attested dependency extra. It never comes from ambient state.
             "AISLE_SIM_BACKEND": gates["sim_backend"],
+            # ADR-55: the engine rides with the backend, resolved by the gate
+            "AISLE_SIM_ENGINE": gates.get("sim_engine", "genesis"),
             "AISLE_TIMEOUT_S": str(episode_timeout_s),
             "AISLE_RESULTS": str(results_path),
             # RST-2: the client stamps every reset request with the mode
@@ -1271,7 +1474,8 @@ def rollout(
         }
     )
     started = time.monotonic()
-    run_budget_s = timeout_s or (GENESIS_BUILD_BUDGET_S + per_episode_budget_s * episodes)
+    build_grace_s = GENESIS_BUILD_BUDGET_S if build_grace_s is None else int(build_grace_s)
+    run_budget_s = timeout_s or (build_grace_s + per_episode_budget_s * episodes)
     if env_baseline != "local":
         # ADR-21 round 3: the run is CAPPED to the campaign's remaining
         # wall budget — a single long rollout cannot blow through the
@@ -1357,6 +1561,8 @@ def rollout(
     lines_at_count = 0
     last_lines = 0
     last_line_t = time.monotonic()
+    progress_every = progress_interval_s()
+    last_progress_t = time.monotonic()
     try:
         proc = spawn_launch(0)
         while time.monotonic() < deadline:
@@ -1411,6 +1617,28 @@ def rollout(
             elif time.monotonic() - last_growth > (PRE_DATA_STALL_S if last_size <= 0 else STALL_S):
                 stalled = True
                 break
+            grace = per_episode_budget_s + (build_grace_s if lines == lines_at_launch else 0)
+            now = time.monotonic()
+            if progress_every > 0 and now - last_progress_t >= progress_every:
+                last_progress_t = now
+                print(
+                    progress_report(
+                        now=now,
+                        started=started,
+                        deadline=deadline,
+                        lines=lines,
+                        episodes=episodes,
+                        seeds=seeds,
+                        last_line_t=last_line_t,
+                        episode_grace_s=grace,
+                        traces_size=size,
+                        last_record=_last_record(raw),
+                        relaunches=relaunches,
+                        timing=summarize_timing(read_timing_rows(run_dir)[-3:]),
+                    ),
+                    file=sys.stderr,
+                    flush=True,
+                )
             # per-episode WALL clamp (ADR-23, W/S2 holdout wedge): traces
             # kept GROWING while one episode ran 4 h, so the stall detector
             # above never fired and the wedged episode ate the whole run
@@ -1419,9 +1647,6 @@ def rollout(
             # first of a launch); past that it is killed, recorded as a
             # synthetic wall_clamp failure, and the run RELAUNCHES with the
             # remaining seeds so they still get scored.
-            grace = per_episode_budget_s + (
-                GENESIS_BUILD_BUDGET_S if lines == lines_at_launch else 0
-            )
             if time.monotonic() - last_line_t > grace:
                 _terminate(proc)
                 # stale nodes from the killed launch are CONCURRENT WRITERS
@@ -1506,6 +1731,7 @@ def rollout(
                         **({"work_launch": relaunches} if record_simulator_work else {}),
                         graph_snapshot=graph_snapshot,
                         **({"typed_stage": typed_stage} if typed_stage is not None else {}),
+                        sim_engine=gates.get("sim_engine", "genesis"),
                     )
                 except RuntimeError as exc:
                     # fail closed mid-run too: a registry broken since the
@@ -1520,7 +1746,7 @@ def rollout(
                 # each relaunch pays a fresh build: extend the deadline by
                 # the build grace (still bounded by the campaign wall cap),
                 # else consecutive wedges cut the tail seeds (PR #58 review)
-                deadline += GENESIS_BUILD_BUDGET_S
+                deadline += build_grace_s
                 if hard_cap_s is not None:
                     deadline = min(deadline, started + hard_cap_s)
                 pending_typed_stage = typed_stage
@@ -1623,8 +1849,14 @@ def rollout(
         # CON-5 / SCN-7: dependency selection and the resolved live device
         # distinguish CPU/Metal/CUDA physics evidence with no hidden probe.
         "sim_extra": gates["sim_extra"],
+        "sim_engine": gates.get("sim_engine", "genesis"),
         "sim_backend": gates["sim_backend"],
         "sim_device": gates["sim_device"],
+        # ADR-55: the bridge's step/render/GPU timing, aggregated over the run,
+        # so engines are compared on the same graph and seeds
+        "sim_timing": summarize_timing(read_timing_rows(run_dir)),
+        # the first-episode build grace this run clamped against (HAR-1)
+        "build_grace_s": build_grace_s,
         "seeds": seeds,
         "reset": reset_mode,
         "verifier": verifier,

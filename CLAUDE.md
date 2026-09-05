@@ -28,6 +28,10 @@ benchmark acceptance. Run things:
 `uv run pytest -m unit`, `uv run harness validate graphs/expert_t0.yaml`,
 `dora run graphs/expert_t0.yaml --uv`. Never install with bare pip/conda.
 CUDA-only deps are forbidden in default extras (CON-1).
+Optional second engine (ADR-55): `harness rollout --sim-engine nexus` runs
+the same scene on Nexus; install its wheel with `tools/nexus_runtime.py`
+(docs/getting-started.md §3b). Genesis stays the default and the only engine
+behind the measured record.
 
 ## Quality gates before EVERY commit (inherited from dora-rs/dora practice)
 Class B/C (nodes, harness, frozen set, contracts): /review on the diff →

@@ -110,9 +110,10 @@ def test_manifest_attests_authored_and_executed_hashes_end_to_end(tmp_path, monk
     monkeypatch.setattr(
         rollout_module,
         "resolve_sim_identity",
-        lambda extra: {
+        lambda extra, engine="genesis": {
             "ok": True,
             "sim_extra": extra,
+            "sim_engine": engine,
             "sim_backend": "cuda",
             "sim_device": "NVIDIA Test GPU",
         },

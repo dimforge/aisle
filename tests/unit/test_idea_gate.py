@@ -141,9 +141,10 @@ def test_gate_attests_the_selected_sim_extra_and_backend(tmp_path, monkeypatch):
     monkeypatch.setattr(
         rollout_module,
         "resolve_sim_identity",
-        lambda extra: {
+        lambda extra, engine="genesis": {
             "ok": True,
             "sim_extra": extra,
+            "sim_engine": engine,
             "sim_backend": "cuda",
             "sim_device": "NVIDIA Test GPU",
         },
@@ -177,7 +178,7 @@ def test_gate_fails_closed_when_requested_backend_is_unavailable(tmp_path, monke
     monkeypatch.setattr(
         rollout_module,
         "resolve_sim_identity",
-        lambda extra: {
+        lambda extra, engine="genesis": {
             "ok": False,
             "gate": "sim_backend",
             "detail": "CUDA device unavailable",

@@ -17,3 +17,6 @@ out/
 # input to one: it is derived from graphs/, so committing it would be a
 # second copy of the topology that silently goes stale.
 *-graph.html
+
+# ADR-55: receipt of the locally built Nexus wheel (tools/nexus_runtime.py)
+.nexus-runtime-receipt.json
