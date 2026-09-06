@@ -4,29 +4,59 @@
 
 [sim]
 # Solver substeps per 10 ms step. physics.toml's `substeps = 1` is tuned for
-# Genesis. Boxes resting on a board creep laterally on Nexus's TGS-soft
-# solver at a rate that only the substep count changes (measured on the
-# franka desk, robot holding home): 1 substep 25 mm in 0.3 s, 8 substeps
-# 1.2 mm/s, 16 substeps 0.33 mm/s (6 ms per step). 16 keeps a 30 s episode
-# under the oracle's 30 mm knock threshold; the creep itself is a Nexus
-# solver issue to fix upstream.
-substeps = 16
-# Contact solver: Nexus's defaults (30 Hz soft contacts, 5 mm allowed
-# penetration, one PGS iteration) let the Franka pinch tunnel through a med
-# box on lift. Replaying the recorded T0 grasp (tools/nexus_grasp_replay.py):
-# 120 Hz + 4 PGS held 1/4, 240 Hz + 8 PGS held 2/3; the GPU solver is not
-# run-to-run deterministic, so the pinch is still marginal (ADR-55).
-# Frequencies in Hz, lengths in meters.
+# Genesis. Replaying the recorded T0 pinch (tools/nexus_grasp_replay.py) after
+# the Nexus solver fixes of September 2026 (duplicated multibody contacts,
+# interleaved PGS sweeps, nearest-point contact warmstarting): the box rides
+# the hand with a 2.5 to 3.2 degree tilt at 8, 4, 2 substeps and even at 1
+# with softer contacts; resting boxes drift 0.001 mm in 3 s from 2 substeps
+# up. GPU per step: 9 ms at 8, 5 at 4, 3 at 2 substeps. 2 keeps the stiff
+# contacts below with a wide margin (4 substeps held with one PGS iteration).
+substeps = 2
+# Contact solver. 240 Hz soft contacts with 0.5 mm allowed penetration keep
+# the pinch penetration at Genesis's scale (about 1 mm per pad under 60 N);
+# Nexus's defaults (30 Hz, 5 mm) also hold the box at one substep but sink the
+# pads several millimeters. Eight PGS iterations cost little at 2 substeps
+# and leave margin for heavier objects. Frequencies in Hz, lengths in meters.
 contact_natural_frequency = 240.0
 static_contact_natural_frequency = 480.0
 allowed_linear_error = 0.0005
 internal_pgs_iterations = 8
+# Solve the friction rows in every biased PGS iteration, not only in the
+# once-per-substep stabilization sweep (rapier's default scheduling, under
+# which friction got one iteration per substep against eight for the
+# normals: the pinched box tilts 5.8 degrees instead of 2.6).
+friction_in_bias_pass = true
+# Explicit Coriolis and gyroscopic terms for the robots: the multibody mass
+# matrix is then refreshed once per step instead of every substep. Nexus's
+# default is implicit.
+implicit_coriolis = false
+# Multibody refresh cadence. Nexus's default (substep_refresh = true) rebuilds
+# the robots' constraints, mass matrix and LU factors every substep. The
+# light cadence keeps the constraints per substep but the mass matrix and LU
+# per step: the replayed T0 pinch holds exactly as with the default (2.5
+# degree tilt) at about 16% less GPU time per step (4.2 ms against 4.9 ms).
+# Both off (constraints per step too) blows the robot up within a few steps
+# on this scene, so it stays out.
+substep_refresh = false
+substep_refresh_light = true
+# Genesis combines the friction of two touching geoms with max(); Nexus's
+# default is the average. Match Genesis so the box/finger pair sees the same
+# coefficient on both engines.
+friction_combine_rule = "max"
 
 [ground]
 # Nexus has no infinite plane primitive; the ground is a fixed slab whose
-# top face sits at z = 0.
+# top face sits at z = 0. A slate checkerboard like Genesis's floor:
+# `checker_squares` squares across the slab (20 m / 40 = 0.5 m squares) in
+# `color` and `checker_color`, drawn as a texture on the collision slab.
 size = [20.0, 20.0, 0.1]
 friction = 1.0
+color = [0.30, 0.33, 0.38, 1.0]
+checker_color = [0.42, 0.46, 0.52, 1.0]
+checker_squares = 40
+# The slab receives shadows but casts none (nothing sits below it), which
+# keeps it out of the shadow depth passes.
+casts_shadows = false
 
 [robot]
 # Genesis's URDF defaults (`default_dofs_kp` / `default_dofs_kv`): joints
@@ -46,9 +76,24 @@ convex_hull = true
 [camera]
 znear = 0.01
 zfar = 50.0
-# Sky color behind the geometry; depth reads 0.0 there, as Genesis's
-# rasterizer returns the far plane only where nothing is hit.
-background_rgba = [0.85, 0.87, 0.9, 1.0]
+# Sky color behind the geometry, dark like Genesis's; depth reads 0.0 there,
+# as Genesis's rasterizer returns the far plane only where nothing is hit.
+background_rgba = [0.07, 0.08, 0.12, 1.0]
+# Sensor and debug renders: 4x MSAA (1 disables antialiasing) and kiss3d's
+# default PCF penumbra (1.0, about five shadow texels wide, close to the 3x3
+# bilinear PCF Genesis's rasterizer applies; 0.0 gives hard edges). The
+# sharpest directional cascade is fit to the camera's first 2.5 m (the desk)
+# instead of kiss3d's 12 m, and shadows stop 20 m out, so the penumbra stays
+# a few millimeters wide rather than smearing over centimeters.
+msaa_samples = 4
+shadow_softness = 1.0
+shadow_first_cascade_m = 2.5
+shadow_distance_m = 20.0
+# Shadow map texels per atlas layer and layers allocated: the scene has one
+# directional light, whose four cascades fit four layers (kiss3d's default is
+# 16), so 4096 texels cost the same memory as 2048 over the full atlas.
+shadow_resolution = 4096
+shadow_atlas_layers = 4
 
 [light]
 # One directional light on the shared scene graph, pointing down at the

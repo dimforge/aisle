@@ -7,6 +7,7 @@ imported to prove it stays sim-free at import time (CON-12), like
 
 import sys
 
+import numpy as np
 import pytest
 
 from aisle.sim import (
@@ -107,6 +108,30 @@ def test_nexus_physics_constants_are_declared():
     assert physics["robot"]["default_kp"] == 100.0  # Genesis's URDF default
     assert physics["robot"]["default_kv"] == 10.0
     assert len(physics["ground"]["size"]) == 3
+    # the pinch-grasp solver settings (ADR-55): friction solved with the
+    # normals, Genesis's max() friction rule
+    assert physics["sim"]["friction_in_bias_pass"] is True
+    assert physics["sim"]["friction_combine_rule"] == "max"
+    assert physics["sim"]["internal_pgs_iterations"] >= 1
+    assert isinstance(physics["sim"]["implicit_coriolis"], bool)
+    # render settings the Nexus viewer applies to its sensor cameras
+    assert physics["camera"]["msaa_samples"] in (1, 4)
+    assert 0.0 <= physics["camera"]["shadow_softness"] <= 1.0
+    assert len(physics["ground"]["color"]) == 4
+    assert physics["camera"]["shadow_resolution"] >= 1024
+    assert 1 <= physics["camera"]["shadow_atlas_layers"] <= 16
+
+
+def test_checkerboard_texture_alternates():
+    """The floor texture is a deterministic checkerboard of the two ground
+    colors, `squares` cells a side at `px_per_square` pixels each."""
+    from aisle.sim.nexus_backend import checkerboard_texture
+
+    image = checkerboard_texture(4, [0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0], px_per_square=2)
+    assert image.shape == (8, 8, 3) and image.dtype == np.uint8
+    assert image[0, 0].tolist() == [0, 0, 0] and image[0, 2].tolist() == [255, 255, 255]
+    assert image[2, 0].tolist() == [255, 255, 255] and image[2, 2].tolist() == [0, 0, 0]
+    assert image[1, 1].tolist() == [0, 0, 0]  # 2x2 pixel cells
 
 
 def test_uv_cube_asset_parses():

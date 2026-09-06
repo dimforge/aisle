@@ -151,6 +151,18 @@ def _png_bytes(image: np.ndarray) -> bytes:
     return buffer.getvalue()
 
 
+def checkerboard_texture(squares: int, color_a, color_b, px_per_square: int = 64) -> np.ndarray:
+    """An RGB checkerboard of `squares` x `squares` cells alternating the two
+    colors (RGB or RGBA in [0, 1]), for the floor slab's textured cube."""
+    squares = max(1, int(squares))
+    a = (np.asarray(color_a[:3], dtype=np.float64) * 255).round().astype(np.uint8)
+    b = (np.asarray(color_b[:3], dtype=np.float64) * 255).round().astype(np.uint8)
+    rows, cols = np.indices((squares, squares))
+    cells = ((rows + cols) % 2).astype(bool)
+    image = np.where(cells[..., None], b, a).astype(np.uint8)
+    return np.repeat(np.repeat(image, px_per_square, axis=0), px_per_square, axis=1)
+
+
 def load_uv_cube() -> tuple[list[list[float]], list[list[int]], list[list[float]]]:
     """The committed UV-mapped unit cube (T2 labels) as (vertices, faces,
     uvs) with one vertex per (position, uv) pair, as the renderer wants."""
@@ -211,8 +223,17 @@ class NexusEngine:
         # one node per body: the depth and segmentation passes only see
         # non-instanced nodes, and per-body ids need them
         viewer.set_sensor_rendering(True)
-        light = load_nexus_physics()["light"]["direction"]
-        viewer.add_directional_light(nexus3d.Vec3(*light))
+        nexus_physics = load_nexus_physics()
+        camera = nexus_physics["camera"]
+        viewer.set_sensor_antialiasing(int(camera["msaa_samples"]))
+        viewer.set_sensor_shadow_softness(float(camera["shadow_softness"]))
+        viewer.set_sensor_shadow_range(
+            float(camera["shadow_first_cascade_m"]), float(camera["shadow_distance_m"])
+        )
+        viewer.set_sensor_shadow_resolution(
+            int(camera["shadow_resolution"]), int(camera["shadow_atlas_layers"])
+        )
+        viewer.add_directional_light(nexus3d.Vec3(*nexus_physics["light"]["direction"]))
         self.viewer = viewer
         self.pipeline = nexus3d.NexusPipeline()
         self.pipeline.preload_pipelines(viewer)
@@ -615,6 +636,9 @@ class NexusScene:
         self.background_rgba = [float(c) for c in background_rgba]
         self.camera_planes = camera_planes
         self.state = nx.NexusState()
+        self.friction_combine_rule = str(
+            load_nexus_physics()["sim"].get("friction_combine_rule", "average")
+        )
         # GPU timestamp queries: harvested by `sync`, read by `perf_stats`
         self.timestamps = nx.GpuTimestamps(engine.viewer, 2048)
         for _ in range(1, self.n_envs):
@@ -655,7 +679,13 @@ class NexusScene:
         for env in range(self.n_envs):
             builder = nx.RigidBodyBuilder.fixed() if fixed else nx.RigidBodyBuilder.dynamic()
             body = builder.pose(pose).build()
-            collider = nx.ColliderBuilder.cuboid(*half).friction(float(friction))
+            # Genesis takes the larger friction of a touching pair; Nexus
+            # defaults to the average, so ask for the same rule
+            collider = (
+                nx.ColliderBuilder.cuboid(*half)
+                .friction(float(friction))
+                .friction_combine_rule(self.friction_combine_rule)
+            )
             if density is not None:
                 collider = collider.density(float(density))
             collider = collider.build()
@@ -693,14 +723,23 @@ class NexusScene:
         )
 
     def add_ground(self, size, friction: float) -> NexusEntity:
-        return self.add_box(
+        ground_cfg = load_nexus_physics()["ground"]
+        ground = self.add_box(
             "ground",
             size,
             (0.0, 0.0, -float(size[2]) / 2),
             fixed=True,
             friction=friction,
-            color=(0.8, 0.8, 0.8, 1.0),
+            color=tuple(ground_cfg["color"]),
+            label_texture=checkerboard_texture(
+                int(ground_cfg["checker_squares"]),
+                ground_cfg["color"],
+                ground_cfg["checker_color"],
+            ),
         )
+        if not ground_cfg.get("casts_shadows", True):
+            self.engine.viewer.set_body_casts_shadows(0, ground.handles[0], False)
+        return ground
 
     def add_urdf_robot(self, path: Path, name: str, convex_hull: bool) -> NexusRobot:
         nx = self.nexus3d
@@ -896,6 +935,13 @@ def _new_scene(engine: NexusEngine, physics: dict, n_envs: int, ambient) -> Nexu
         static_contact_natural_frequency=float(sim["static_contact_natural_frequency"]),
         allowed_linear_error=float(sim["allowed_linear_error"]),
         internal_pgs_iterations=int(sim["internal_pgs_iterations"]),
+        friction_in_bias_pass=bool(sim.get("friction_in_bias_pass", False)),
+    )
+    scene.state.set_rbd_implicit_coriolis(engine.viewer, bool(sim.get("implicit_coriolis", True)))
+    scene.state.set_rbd_substep_refresh(
+        engine.viewer,
+        bool(sim.get("substep_refresh", True)),
+        bool(sim.get("substep_refresh_light", False)),
     )
     return scene
 

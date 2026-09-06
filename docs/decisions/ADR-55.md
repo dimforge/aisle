@@ -73,21 +73,28 @@ Genesis record.
   before the sensor cameras existed, whose per-object uniform buffer then
   grew until wgpu rejected the offsets (kiss3d branch
   `fix-shared-window-managers`).
-- Solver settings are the engine's, not the scene's, and had to be tuned
-  (`src/aisle/sim/nexus_physics.toml [sim]`): boxes at rest on a board creep
-  on Nexus at a rate set only by the substep count (1 substep: 25 mm in
-  0.3 s, read by the oracle as a collision; 8: 1.2 mm/s; 16: 0.33 mm/s), so
-  Nexus runs 16 substeps against Genesis's one. With Nexus's default 30 Hz
-  soft contacts, 5 mm penetration allowance and one PGS iteration the Franka
-  pinch let the box slip on lift. Replaying the recorded T0 commands
-  (`tools/nexus_grasp_replay.py`) the box follows the hand as on Genesis in
-  2 of 3 replays with 240 Hz contacts, 0.5 mm allowance and eight PGS
-  iterations (now the defaults; 0 of 3 with four iterations), at roughly 10 ms
-  of GPU time per 10 ms tick on an M-series laptop. The pinch is therefore
-  still marginal and not run-to-run deterministic: the Genesis T0 expert
-  passes seed 0 (verified on this bridge code), the Nexus run executes every
-  stage but has not yet held the box through the lift. Both the creep and
-  the pinch robustness are Nexus solver work, tracked upstream.
+- Solver settings are the engine's, not the scene's
+  (`src/aisle/sim/nexus_physics.toml [sim]`). The first Nexus runs lost the
+  Franka pinch on lift, showed boxes creeping on their boards, and needed 16
+  substeps with eight PGS iterations to come close. All of it traced to the
+  Nexus solver, fixed on the `aisle-backend` branch: contacts between a
+  multibody link and a rigid body were solved twice, once by the multibody
+  solver and once by the rigid-body solver against a zero-inverse-mass copy of
+  the link that never moved, so the fingers' friction was cancelled by a ghost
+  of themselves; the rigid-body sweeps ran one PGS iteration per substep
+  against eight for the multibody (now interleaved); contact warmstarting
+  matched every point of a small manifold to the first old point within 10 cm,
+  so a fingertip pad's four points all inherited one impulse and the solver
+  had to redistribute them every step (now nearest-point matching); friction
+  rows were only solved in the once-per-substep stabilization sweep (now
+  optionally in every biased iteration, `friction_in_bias_pass`); and Nexus
+  averaged the friction of a touching pair where Genesis takes the maximum
+  (`friction_combine_rule`). Replaying the recorded T0 commands
+  (`tools/nexus_grasp_replay.py`) the box now follows the hand with a tilt
+  under 3.2 degrees at 8, 4 or 2 substeps, and at Genesis's single substep
+  with 30 Hz contacts; resting boxes drift 0.001 mm in 3 s. AISLE runs 2
+  substeps with 240 Hz contacts, 0.5 mm allowance and eight iterations, about
+  3 ms of GPU per 10 ms tick on an M-series laptop.
 - Known gaps on Nexus: `get_dofs_velocity` on robots reports zeros
   (generalized velocities are not read back), a fixed-root robot's base is
   re-based through the body buffer (SPEC 210 mobile), and URDF inertial

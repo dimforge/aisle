@@ -129,8 +129,8 @@ uv run --extra sim --locked harness rollout --graph graphs/expert_t0.yaml --tier
   budget and `--build-grace-s N` the grace; a Nexus scene builds in seconds,
   so `--build-grace-s 60` clamps a wedged Nexus episode in about a minute
   past its tier budget.
-- `AISLE_DEBUG_VIEW=side` (Nexus only: Genesis fixes its cameras at build)
-  adds an operator camera looking at the shelf front from the tray side and
+- `AISLE_DEBUG_VIEW=side` (either engine) adds an operator camera after the
+  build, looking at the shelf front from the tray side, and
   writes `runs/<run-id>/debug_view.mp4` at 10 fps, useful for seeing a grasp
   slip in profile. `AISLE_DEBUG_VIEW=px,py,pz;lx,ly,lz` sets an explicit eye
   and look-at in the base frame. The recorded traces and `overhead.mp4` are
