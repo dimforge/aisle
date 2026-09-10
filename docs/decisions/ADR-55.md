@@ -47,13 +47,49 @@ Genesis record.
 5. **Nexus-only constants** (Genesis-equivalent default PD gains for URDF
    joints, the ground slab replacing the infinite plane, camera clip planes)
    live in `src/aisle/sim/nexus_physics.toml`, outside the frozen set.
+6. **The engine realization is attested by its own digest, not by widening
+   the fence.** `env_hash.sim_engine_hash(root, engine, build=None)` is one
+   sha256 over the engine name, `src/aisle/sim/**` (so nexus_physics.toml's
+   `substeps`, `internal_pgs_iterations`, `contact_natural_frequency` and
+   `friction_combine_rule` are inside it) and the engine build provenance.
+   It returns `{"engine", "sim_engine_hash", "n_files", "build"}` for the
+   run manifest, and `tools/env_hash.py --sim-engine <engine>` emits the
+   same block as `report["sim"]`. Recorded, never a gate: the CON-7 verdict
+   stays the frozen set's.
+   Adding `src/aisle/sim` to `FROZEN_DIRS` was rejected. It moves the
+   Genesis `env_hash` from `1d83efde` (87 files) to `4cf1d9f9` (90),
+   i.e. it spends the attestation discontinuity that issue #283 reserves
+   for the composite `env_hash` with its bridging measurement (re-run M0
+   and one tier curve at the new hash, show identity). Until then every
+   recorded Genesis manifest, `tools/env_hash.json` and every
+   `--env-baseline origin/main` run would have to be reissued for a change
+   that buys nothing on the Genesis side.
+7. **The engine build is provenance, not a version string.**
+   `nexus_runtime.read_receipt(root=None)` is the public reader for
+   `.nexus-runtime-receipt.json`, returning
+   `{"installed", "path", "receipt", "problem"}` (`receipt` = wheel,
+   version, cargo feature, platform, and the nexus/rapier/kiss3d commits
+   with their dirty flags), never raising; `tools/nexus_runtime.py receipt`
+   is its CLI (exit 0 iff installed). The receipt is gitignored and local
+   to the machine that built the wheel, so the manifest's copy is the only
+   durable trace, and it is what `sim_engine_hash`'s `build` argument
+   takes. ADR-24's attested set is engine-aware to match: `ENGINE_DISTS`
+   adds the running engine's own distribution (`dimforge-nexus3d` for
+   Nexus) to the engine-neutral core, which previously named `genesis-world`
+   whatever engine ran.
+8. **The realization cannot be hot-swapped.** `src/aisle/sim` joins
+   `harness/swap.py`'s `FROZEN_ROOTS` beside the bridge: unfenced code that
+   decides the physics would otherwise be the one way to change what a
+   running attested dataflow measures (HAR-10).
 
 ## Consequences
 
 - Results across engines are NOT comparable: contact models, solver and
   renderer differ. A Nexus run is a different environment; the frozen-set
-  hash does not encode the engine, so the manifest's `sim_engine` field is
-  the discriminator. Before any Nexus result enters the measured record,
+  hash does not encode the engine, so the manifest's `sim_engine` field and
+  decision 6's `sim_engine_hash` are the discriminators. The frozen set does
+  not encode the solver settings either, which is why the engine digest
+  exists. Before any Nexus result enters the measured record,
   the frozen baseline must be re-established under human review (CON-7) and
   SPEC 020 / SPEC 030 wording generalized by a `spec-change` PR (CON-14).
 - The Genesis-fit constants in `physics.toml` (gripper gains, the SO-101
@@ -95,6 +131,28 @@ Genesis record.
   with 30 Hz contacts; resting boxes drift 0.001 mm in 3 s. AISLE runs 2
   substeps with 240 Hz contacts, 0.5 mm allowance and eight iterations, about
   3 ms of GPU per 10 ms tick on an M-series laptop.
+- A Nexus run cannot pass `--env-baseline origin/main`. The wheel is
+  installed out of lock (`uv pip install` of a locally built archive), so
+  ADR-24's `uv sync --locked --check` fails and the trusted gate refuses
+  with DIST_DRIFT; with the attested set now engine-aware, the wheel's own
+  PEP 610 record (`archive_info` with no hash, a `file://` path) adds
+  `dimforge-nexus3d: archive install without a hash`. Nexus runs are
+  therefore `--env-baseline local`, recorded honestly as unattested, and
+  the receipt digest is the substitute provenance. Putting Nexus inside the
+  lock is the precondition for any attested Nexus run.
+- Editing `tools/env_hash.py` at all makes the trusted mode refuse on a
+  branch until the change merges ("the gate tooling itself is not
+  trusted"), Genesis runs included. The engine attestation above therefore
+  lands as a normal env-change PR, not mid-campaign.
+- `sim_engine_hash` covers the whole realization package, so a Nexus-only
+  edit also moves the Genesis digest. Over-inclusive by design: it may
+  report a change that did not affect the run, and can never report two
+  different physics as the same environment.
+- Still owed: the rollout layer records neither `sim_engine_hash` nor the
+  receipt yet, so a run manifest's `sim_engine` string remains the only
+  engine discriminator until that wiring lands. And a `dirty: true` source
+  (the nexus checkout today) means the receipt's commit does not fully
+  identify the build.
 - Known gaps on Nexus: `get_dofs_velocity` on robots reports zeros
   (generalized velocities are not read back), a fixed-root robot's base is
   re-based through the body buffer (SPEC 210 mobile), and URDF inertial

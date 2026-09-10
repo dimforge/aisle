@@ -524,6 +524,96 @@ def test_committed_hash_matches_this_tree():
     assert computed["n_files"] == committed["n_files"]
 
 
+def _sim_root(tmp_path: Path) -> Path:
+    """make_root plus the ADR-55 engine realization package."""
+    root = make_root(tmp_path)
+    sim = root / "src" / "aisle" / "sim"
+    sim.mkdir(parents=True)
+    (sim / "__init__.py").write_text("ENGINES = ('genesis', 'nexus')\n")
+    (sim / "nexus_backend.py").write_text("def build_scene():\n    return None\n")
+    (sim / "nexus_physics.toml").write_text("[sim]\nsubsteps = 2\n")
+    return root
+
+
+def test_adr55_sim_engine_hash_covers_the_realization_the_fence_does_not(tmp_path):
+    """CON-5, CON-7, ADR-55: the frozen set is engine neutral by decision
+    (widening it would move every Genesis env_hash), so the engine
+    realization gets its OWN digest. Two trees differing only in
+    nexus_physics.toml's `substeps` share an env_hash — the exact hole the
+    audit found — and must differ in sim_engine_hash."""
+    import sys as _sys
+
+    _sys.path.insert(0, str(REPO_ROOT / "tools"))
+    from env_hash import compute_env_hash, sim_engine_hash
+
+    root = _sim_root(tmp_path)
+    before_env, _ = compute_env_hash(root)
+    before = sim_engine_hash(root, "nexus")
+    assert before["engine"] == "nexus" and before["n_files"] == 3
+    assert sim_engine_hash(root, "nexus") == before  # deterministic
+
+    (root / "src" / "aisle" / "sim" / "nexus_physics.toml").write_text("[sim]\nsubsteps = 8\n")
+    after_env, _ = compute_env_hash(root)
+    assert after_env == before_env, "the solver settings are outside the fence by decision"
+    assert sim_engine_hash(root, "nexus")["sim_engine_hash"] != before["sim_engine_hash"]
+
+
+def test_adr55_sim_engine_hash_names_the_engine_and_its_build(tmp_path):
+    """CON-5, ADR-55: the digest binds the engine name and the engine build
+    provenance, so the same realization built from different Nexus sources
+    is a different environment identity — and a run manifest can carry the
+    receipt the gitignored file would otherwise keep local."""
+    import sys as _sys
+
+    _sys.path.insert(0, str(REPO_ROOT / "tools"))
+    from env_hash import sim_engine_hash
+
+    root = _sim_root(tmp_path)
+    genesis = sim_engine_hash(root, "genesis")
+    nexus = sim_engine_hash(root, "nexus")
+    assert genesis["sim_engine_hash"] != nexus["sim_engine_hash"]
+    assert genesis["build"] is None
+
+    receipt = {"version": "0.1.0", "sources": {"nexus": {"commit": "a" * 40, "dirty": False}}}
+    built = sim_engine_hash(root, "nexus", receipt)
+    assert built["build"] == receipt
+    assert built["sim_engine_hash"] != nexus["sim_engine_hash"]
+    moved = {"version": "0.1.0", "sources": {"nexus": {"commit": "b" * 40, "dirty": False}}}
+    assert sim_engine_hash(root, "nexus", moved)["sim_engine_hash"] != built["sim_engine_hash"]
+
+
+def test_adr55_attested_set_names_the_running_engines_distribution(tmp_path):
+    """ADR-24 as amended by ADR-55: the attested sim core listed
+    genesis-world only, so a Nexus run's provenance check never looked at
+    the wheel whose solver produced the trajectories. The engine-neutral
+    core stays; the running engine's dist is added to it."""
+    import sys as _sys
+
+    _sys.path.insert(0, str(REPO_ROOT / "tools"))
+    from env_hash import attested_set
+
+    assert "dimforge-nexus3d" not in attested_set(tmp_path)
+    assert "dimforge-nexus3d" not in attested_set(tmp_path, "genesis")
+    nexus = attested_set(tmp_path, "nexus")
+    assert "dimforge-nexus3d" in nexus
+    assert {"genesis-world", "torch"} <= set(nexus)  # the neutral core is kept
+
+
+def test_adr55_cli_reports_the_engine_digest_without_moving_env_hash(tmp_path):
+    """CON-8, CON-7, ADR-55: --sim-engine adds a `sim` block to the JSON
+    report and leaves env_hash and the verdict untouched — the engine
+    digest is recorded, never a gate."""
+    root = _sim_root(tmp_path)
+    plain = json.loads(run_env_hash("--root", str(root)).stdout)
+    proc = run_env_hash("--root", str(root), "--sim-engine", "nexus")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    report = json.loads(proc.stdout)
+    assert report["ok"] is True
+    assert report["env_hash"] == plain["env_hash"] and "sim" not in plain
+    assert report["sim"]["engine"] == "nexus"
+    assert len(report["sim"]["sim_engine_hash"]) == 64
+
+
 def _frozen_set():
     """The fence, read from the checker itself rather than restated."""
     import sys

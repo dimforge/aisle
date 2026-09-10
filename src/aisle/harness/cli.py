@@ -39,6 +39,22 @@ def _git_sha(root: Path) -> str:
     ).stdout.strip()
 
 
+def _add_sim_engine_flag(parser: argparse.ArgumentParser) -> None:
+    """The one `--sim-engine` definition (ADR-55) every sim-launching
+    subcommand shares, so no entry point can drift to another engine set or
+    silently force genesis. `None` asserts nothing: the graph's declaration
+    wins, and an undeclared graph runs the default engine."""
+    from aisle.sim import ENGINES
+
+    parser.add_argument(
+        "--sim-engine",
+        default=None,
+        choices=list(ENGINES),
+        help="physics engine realizing the scene (ADR-55, ADR-56); genesis is "
+        "the default; omit to honour the engine the graph's bridge declares",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     """The full CLI surface (CON-8). Exposed so the research contract's
     copy-paste examples are TESTED against the real argparse tree (T17):
@@ -75,18 +91,13 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["sim", "cuda"],
         help="attested dependency/backend selection: portable sim or Linux CUDA",
     )
-    roll.add_argument(
-        "--sim-engine",
-        default="genesis",
-        choices=["genesis", "nexus"],
-        help="physics engine realizing the scene (ADR-55): genesis (default) or nexus",
-    )
+    _add_sim_engine_flag(roll)
     roll.add_argument(
         "--build-grace-s",
         type=int,
         default=None,
         help="scene-build wall grace added to the first episode of each launch "
-        "(default 420 s, sized for Genesis; a Nexus scene builds in seconds)",
+        "(default is engine-derived: 420 s for Genesis, 60 s for Nexus)",
     )
     roll.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     roll.add_argument(
@@ -156,6 +167,7 @@ def build_parser() -> argparse.ArgumentParser:
         "no quality claim, never safety_class motion, never counted as a "
         "library skill. Promote by re-registering without this flag.",
     )
+    _add_sim_engine_flag(skr)
 
     sw = subparsers.add_parser("swap", help="hot-swap a node on a live dataflow (HAR-10)")
     sw.add_argument("--graph", type=Path, required=True)
@@ -173,6 +185,7 @@ def build_parser() -> argparse.ArgumentParser:
     fl.add_argument("--out", type=Path, default=None, help="output dir (default runs/fleet-<ts>)")
     fl.add_argument("--timeout-s", type=float, default=1200.0)
     fl.add_argument("--root", type=Path, default=DEFAULT_ROOT)
+    _add_sim_engine_flag(fl)
 
     pr = subparsers.add_parser("probe", help="attach a temporary topic inspector (HAR-11)")
     pr.add_argument("--dataflow", required=True)
@@ -308,6 +321,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     mono_run.add_argument("--verifier", default="oracle", choices=["oracle", "realistic"])
     mono_run.add_argument("--reset", default="teleport", choices=["teleport", "behavioral"])
+    _add_sim_engine_flag(mono_run)
     mono_check = monolith_sub.add_parser("check", help="compile/construct the module; no sim")
     mono_check.add_argument("--module", type=Path, required=True)
     mono_check.add_argument("--embodiment", default="franka", choices=["franka", "so101"])
@@ -366,6 +380,7 @@ def build_parser() -> argparse.ArgumentParser:
     fault_calibrate.add_argument("--only", default=None, help="comma list of opaque ids")
     fault_calibrate.add_argument("--output", type=Path, default=None)
     fault_calibrate.add_argument("--root", type=Path, default=DEFAULT_ROOT)
+    _add_sim_engine_flag(fault_calibrate)
     fault_leakage = fault_sub.add_parser("leakage", help="FLT-8 sham-vs-fault leakage probe")
     fault_leakage.add_argument("--report", type=Path, required=True, help="calibration report")
     fault_leakage.add_argument("--probe", type=Path, required=True, help="frozen probe declaration")
@@ -474,6 +489,7 @@ def main() -> int:
                     template=mono.TEMPLATE_GRAPH if args.template is None else args.template,
                     verifier=args.verifier,
                     reset_mode=args.reset,
+                    sim_engine=args.sim_engine,
                 )
             elif args.monolith_command == "check":
                 from aisle.monolith.worker_config import configured_worker_factory
@@ -890,15 +906,29 @@ def main() -> int:
         import time as time_module
 
         from aisle.harness.fleet import run_fleet
-        from aisle.harness.rollout import parse_seed_range, scrub_bringup_env
+        from aisle.harness.rollout import parse_seed_range, scrub_bringup_env, sim_device_for
         from aisle.harness.validate import validate as validate_graph
+        from aisle.sim import normalize_engine, select_sim_backend
 
         out_dir = args.out or (args.root / "runs" / f"fleet-{int(time_module.time())}")
+        # ADR-55: the engine is the RUNNER's choice, not the shell's. The
+        # scrub below strips both variables, so they are re-applied here from
+        # the validated flag and the platform's backend table.
+        try:
+            sim_engine = normalize_engine(args.sim_engine)
+            sim_backend = select_sim_backend(sim_engine, "sim", platform.system())
+        except ValueError as refused:
+            print(json.dumps({"ok": False, "error": str(refused)}))
+            return 1
 
         procs = []
 
         def launch(graph_path):
-            env = {**scrub_bringup_env(dict(os.environ))}
+            env = {
+                **scrub_bringup_env(dict(os.environ)),
+                "AISLE_SIM_ENGINE": sim_engine,
+                "AISLE_SIM_BACKEND": sim_backend,
+            }
             proc = subprocess.Popen(
                 ["dora", "run", str(graph_path), "--uv"],
                 cwd=args.root,
@@ -919,6 +949,9 @@ def main() -> int:
             args.timeout_s,
             launch,
             root=args.root,
+            sim_engine=sim_engine,
+            sim_backend=sim_backend,
+            sim_device=sim_device_for(sim_engine, sim_backend),
         )
         # validate the STAMPED graph and attach the verdict (VAL gates)
         stamped = validate_graph(Path(report["graph"]), args.root, "franka", False)
@@ -952,6 +985,7 @@ def main() -> int:
                 now=datetime.date.today().isoformat(),
                 run_id=args.run_id,
                 sandbox=args.sandbox,
+                sim_engine=args.sim_engine,
             )
         except RegistrationError as refused:
             print(json.dumps({"ok": False, "error": str(refused)}))

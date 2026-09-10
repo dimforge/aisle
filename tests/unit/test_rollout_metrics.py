@@ -133,6 +133,9 @@ def test_rollout_relative_root_pins_absolute_paths_for_dora(tmp_path, monkeypatc
             "ok": True,
             "env_hash": "x",
             "sim_extra": "sim",
+            # ADR-55: the gate always resolves an engine; the runner now
+            # requires the key rather than defaulting to genesis
+            "sim_engine": "genesis",
             "sim_backend": "metal",
             "sim_device": "mps",
         },
@@ -334,6 +337,9 @@ def test_per_episode_wall_clamp_records_and_relaunches(tmp_path, monkeypatch):
             "ok": True,
             "env_hash": "x",
             "sim_extra": "sim",
+            # ADR-55: the gate always resolves an engine; the runner now
+            # requires the key rather than defaulting to genesis
+            "sim_engine": "genesis",
             "sim_backend": "metal",
             "sim_device": "mps",
         },
@@ -491,6 +497,9 @@ def test_relaunch_reaps_orphans_and_isolates_trace_dirs(tmp_path, monkeypatch):
             "ok": True,
             "env_hash": "x",
             "sim_extra": "sim",
+            # ADR-55: the gate always resolves an engine; the runner now
+            # requires the key rather than defaulting to genesis
+            "sim_engine": "genesis",
             "sim_backend": "metal",
             "sim_device": "mps",
         },
@@ -810,7 +819,11 @@ def test_rollout_refuses_behavioral_before_reserving_any_episodes(tmp_path, monk
     would still pass."""
     from aisle.harness import rollout as ro
 
-    monkeypatch.setattr(ro, "run_gates", lambda *a, **k: {"ok": True, "sim_backend": "genesis"})
+    monkeypatch.setattr(
+        ro,
+        "run_gates",
+        lambda *a, **k: {"ok": True, "sim_engine": "genesis", "sim_backend": "genesis"},
+    )
 
     def run(mode):
         return ro.rollout(

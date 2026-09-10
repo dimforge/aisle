@@ -110,6 +110,12 @@ def _graph_inventory(root: Path, tracked: set[str] | None) -> list[dict]:
                 "perception": (
                     env.get("AISLE_PERCEPTION", "L0 (default)") if env is not None else "—"
                 ),
+                # ADR-55: the engine is declared on the bridge like the rung,
+                # and a run on another engine is another environment; without
+                # this column every graph reads as Genesis.
+                "engine": (
+                    env.get("AISLE_SIM_ENGINE", "genesis (default)") if env is not None else "—"
+                ),
                 "nodes": node_ids,
             }
         )
@@ -283,7 +289,7 @@ _DIR_ROLES = {
     "skills": "registered agent-authored skills",
     "skills_pending_review": "recovered campaign skills, not registered",
     "specs": "numbered specs with MUST ids (000 = constitution)",
-    "src": "the aisle package: scenes, bridge, verifier, reset, harness, nodes",
+    "src": "the aisle package: scenes, bridge, sim engines, verifier, reset, harness, nodes",
     "templates": "scaffolding for new artifacts",
     "tests": "unit / sim / graph suites",
     "tools": "CI, env_hash, trace_check, campaign runners",
@@ -370,8 +376,8 @@ def render_inventory(root: Path) -> tuple[str, dict[str, int]]:
         "",
         "## Graphs",
         "",
-        "| Graph | Scene/scenario | Embodiment | Perception | Nodes |",
-        "|---|---|---|---|---:|",
+        "| Graph | Scene/scenario | Embodiment | Perception | Engine | Nodes |",
+        "|---|---|---|---|---|---:|",
     ]
     for row in graphs:
         relative = _relative(row["path"], root)
@@ -383,6 +389,7 @@ def render_inventory(root: Path) -> tuple[str, dict[str, int]]:
                     _cell(f"{row['scene']} / {row['scenario']}"),
                     _cell(row["embodiment"]),
                     _cell(row["perception"]),
+                    _cell(row["engine"]),
                     str(len(row["nodes"])),
                 ]
             )

@@ -153,11 +153,26 @@ common cause).
 ## 3b. Optional: run the scene on the Nexus engine (ADR-55)
 
 Genesis is the default and the only engine behind the measured record. The
-same graphs can run on [Nexus](https://github.com/dimforge/nexus) (GPU
+graphs can also run on [Nexus](https://github.com/dimforge/nexus) (GPU
 rigid bodies, Metal on macOS) for development: the bridge picks the engine
 from `AISLE_SIM_ENGINE`, which `harness rollout --sim-engine nexus` injects
 into the bridge node and records in the manifest. Results are not
 comparable across engines.
+
+How far the Nexus path is actually exercised, as of today:
+
+- The **pharmacy desk** scene with the franka and so101 embodiments is
+  covered by `tests/sim/test_nexus_scene.py` (placements, IK and home pose,
+  the overhead/wrist passes, stepping and teleport reset, batched builds).
+- The **retail store** scene (`build_store`) and the **mobile** embodiment
+  are implemented on the Nexus backend but have no Nexus test.
+- The **L1/L2** perception rungs have no Nexus test either. Their raw
+  material is covered on the desk scene (one pass yields rgb, metric depth
+  and a segmentation map using the scene's own ids), but no rollout on the
+  rungs has been run against Nexus.
+- **Nexus stepping determinism is not established** (ADR-55): only build
+  determinism is. See [determinism](determinism.md) before reading anything
+  reproducible into a Nexus run.
 
 Nexus is not part of the lock. Build its Python module from sibling
 checkouts: nexus on its `aisle-backend` branch, whose manifest patches the

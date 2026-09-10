@@ -347,6 +347,11 @@ class NexusRobot:
         ]
         self.link_bodies = [list(r.link_body_handles) for r in robots]  # per env
         self._state_cache: dict[int, tuple] | None = None
+        # last root pose written by set_pos/set_quat, per env. The GPU link
+        # workspace only picks a written root up on the next step, so the
+        # second half of a set_pos + set_quat pair would otherwise read the
+        # stale root back and undo the first half (SPEC 210 re-basing).
+        self._root_writes: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         nexus_defaults = load_nexus_physics()["robot"]
         for robot in robots:
             robot.kp = [k if k > 0 else nexus_defaults["default_kp"] for k in robot.kp]
@@ -399,9 +404,14 @@ class NexusRobot:
         return _squeeze_envs(rows, self.scene.n_envs)
 
     def get_dofs_velocity(self) -> np.ndarray:
-        # generalized velocities are not read back; report link-derived zeros
-        # until a consumer needs them
-        return _squeeze_envs(np.zeros((self.scene.n_envs, self.n_dofs)), self.scene.n_envs)
+        """Generalized velocities, read back from the GPU dof state in the
+        same order as `get_qpos`."""
+        viewer = self.scene.engine.viewer
+        rows = [
+            np.asarray(self.scene.state.robot_qvel(viewer, self.robots[env]), dtype=np.float32)
+            for env in range(self.scene.n_envs)
+        ]
+        return _squeeze_envs(np.stack(rows), self.scene.n_envs)
 
     def set_qpos(self, qpos, envs_idx=None) -> None:
         rows, envs = _broadcast_rows(qpos, self.scene.n_envs, envs_idx)
@@ -411,6 +421,10 @@ class NexusRobot:
         self.scene.invalidate_poses()
 
     def zero_all_dofs_velocity(self, envs_idx=None) -> None:
+        """Re-send the simulated qpos: `set_robot_qpos` zeroes the generalized
+        velocities and the link body velocities on the GPU, so writing the
+        current coordinates back is how the robot is brought to rest without
+        moving it (the bridge calls this on every reset)."""
         envs = range(self.scene.n_envs) if envs_idx is None else [int(e) for e in envs_idx]
         for env in envs:
             qpos = self._state(env)[0]
@@ -425,21 +439,38 @@ class NexusRobot:
     def get_quat(self) -> np.ndarray:
         return self.links[0].get_quat()
 
+    def _root_pose(self, env: int) -> tuple[np.ndarray, np.ndarray]:
+        """The root pose to write the other half of a re-basing against: the
+        pending write if there is one, else the simulated pose."""
+        pending = self._root_writes.get(env)
+        if pending is not None:
+            return pending
+        pos, quat = self._link_poses()
+        return np.asarray(pos[env, 0], dtype=np.float64), np.asarray(quat[env, 0], dtype=np.float64)
+
+    def root_write_consumed(self) -> None:
+        """A step has read the written root out of the body buffer, so the
+        link readback is authoritative again."""
+        self._root_writes.clear()
+
+    def _write_root(self, env: int, pos, quat) -> None:
+        pos = np.asarray(pos, dtype=np.float64).reshape(-1)[:3]
+        quat = np.asarray(quat, dtype=np.float64).reshape(-1)[:4]
+        self.scene.set_body_pose(env, self.link_bodies[env][0], pos, quat)
+        self._root_writes[env] = (pos, quat)
+        self.invalidate()
+
     def set_pos(self, pos, envs_idx=None) -> None:
         """Re-base the (fixed-root) robot: the GPU reads a fixed root's pose
         from the body buffer every step (SPEC 210 mobile re-basing)."""
         rows, envs = _broadcast_rows(pos, self.scene.n_envs, envs_idx)
-        _, quat = self._link_poses()
         for row, env in zip(rows, envs, strict=True):
-            self.scene.set_body_pose(env, self.link_bodies[env][0], row[:3], quat[env, 0])
-        self.invalidate()
+            self._write_root(env, row[:3], self._root_pose(env)[1])
 
     def set_quat(self, quat, envs_idx=None) -> None:
         rows, envs = _broadcast_rows(quat, self.scene.n_envs, envs_idx)
-        pos, _ = self._link_poses()
         for row, env in zip(rows, envs, strict=True):
-            self.scene.set_body_pose(env, self.link_bodies[env][0], pos[env, 0], row[:4])
-        self.invalidate()
+            self._write_root(env, self._root_pose(env)[0], row[:4])
 
     # -- control ---------------------------------------------------------
 
@@ -603,6 +634,15 @@ class NexusCamera:
         rgb_arr, depth_arr, seg_arr = self.scene.engine.viewer.render_sensor_camera(
             self.cam_id, rgb=bool(rgb), depth=bool(depth), segmentation=bool(segmentation)
         )
+        if depth_arr is not None:
+            # Genesis reads the cleared depth buffer, so a pixel that hit
+            # nothing comes back at the FAR plane; the renderer writes 0.0
+            # there instead. The difference is not cosmetic: L2 back-projects
+            # a bounding-box mask, and a 0.0 sample lands at the camera, which
+            # is above every real surface, so the background captured the
+            # top-surface quantile and the grasp pose with it.
+            depth_arr = np.asarray(depth_arr, dtype=np.float32)
+            depth_arr[depth_arr <= 0.0] = np.float32(self.scene.camera_planes[1])
         if seg_arr is not None:
             # Genesis: int64 ids keyed by `segmentation_idx_dict`, -1 for the
             # background; the renderer's background is 0 and no scene id is 0
@@ -831,6 +871,8 @@ class NexusScene:
     def step(self) -> None:
         self.engine.pipeline.simulate(self.engine.viewer, self.state, self.timestamps)
         self.invalidate_poses()
+        for robot in self.robots:
+            robot.root_write_consumed()
 
     def perf_stats(self) -> dict:
         """Engine-side timing of the last step: `gpu_ms` is the summed GPU
@@ -902,7 +944,17 @@ class NexusScene:
         self.state.set_body_pose(
             self.engine.viewer, env, handle, [float(v) for v in pos], [float(v) for v in quat_wxyz]
         )
-        self.invalidate_poses()
+        # a teleport writes the pose in two halves (set_pos then set_quat) and
+        # each reads back the other, so dropping the cache here cost two GPU
+        # readbacks per body on every reset. The written row is known: patch
+        # it instead, and keep the velocity cache, which the write leaves alone
+        self._synced = False
+        if self._pose_cache is not None:
+            row = self.gpu_index(env, handle)
+            self._pose_cache[0][row] = pos
+            self._pose_cache[1][row] = quat_wxyz
+        for robot in self.robots:
+            robot.invalidate()
 
     def set_body_velocity(
         self, env: int, handle, linvel=(0.0, 0.0, 0.0), angvel=(0.0, 0.0, 0.0)

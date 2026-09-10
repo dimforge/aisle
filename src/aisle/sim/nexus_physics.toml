@@ -76,8 +76,9 @@ convex_hull = true
 [camera]
 znear = 0.01
 zfar = 50.0
-# Sky color behind the geometry, dark like Genesis's; depth reads 0.0 there,
-# as Genesis's rasterizer returns the far plane only where nothing is hit.
+# Sky color behind the geometry, dark like Genesis's. Depth reads `zfar`
+# where nothing was hit, which is what Genesis's rasterizer returns from its
+# cleared depth buffer; the renderer writes 0.0 there and the camera remaps it.
 background_rgba = [0.07, 0.08, 0.12, 1.0]
 # Sensor and debug renders: 4x MSAA (1 disables antialiasing) and kiss3d's
 # default PCF penumbra (1.0, about five shadow texels wide, close to the 3x3

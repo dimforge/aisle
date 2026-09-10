@@ -184,9 +184,13 @@ def _lint_or(root: Path, message: str) -> None:
         raise RegistrationError(f"{message}: {report.get('errors', [])[:3]}")
 
 
-def run_skill_eval(skill: Skill, root: Path, run_rollout, run_id: str) -> float:
+def run_skill_eval(
+    skill: Skill, root: Path, run_rollout, run_id: str, sim_engine: str | None = None
+) -> float:
     """The shipped mini-rollout against the STAGED candidate: returns the
-    measured pass rate (pass1)."""
+    measured pass rate (pass1). sim_engine (ADR-55) rides through to the
+    runner so the eval is not pinned to genesis; None honours whatever the
+    eval graph declares."""
     cfg = skill.eval_cfg
     report = run_rollout(
         root=root,
@@ -201,6 +205,7 @@ def run_skill_eval(skill: Skill, root: Path, run_rollout, run_id: str) -> float:
         no_idea_gate=True,  # registration machinery, logged (ADR-22)
         embodiment=str(cfg["embodiment"]),
         env_baseline=str(cfg.get("env_baseline", "local")),
+        sim_engine=sim_engine,
     )
     if not report.get("ok"):
         detail = report.get("refused") or report.get("error") or "no episodes"
@@ -215,9 +220,11 @@ def register_skill(
     now: str,
     run_id: str | None = None,
     sandbox: bool = False,
+    sim_engine: str | None = None,
 ) -> dict:
     """validate → STAGE → lint → eval → evalcard → final lint (§8.4);
-    every failure rolls the registry back exactly.
+    every failure rolls the registry back exactly. `sim_engine` (ADR-55)
+    selects the physics engine the eval rollout runs on.
 
     `sandbox=True` (ADR-40, #265) takes the §9.4 lower rung: admit the id so
     graphs referencing it VALIDATE, while making no quality claim at all — no
@@ -285,7 +292,7 @@ def register_skill(
                 ),
             }
         eval_run_id = run_id or f"skill-{skill.manifest['id']}-{now}-{uuid.uuid4().hex[:6]}"
-        pass_rate = run_skill_eval(skill, root, run_rollout, eval_run_id)
+        pass_rate = run_skill_eval(skill, root, run_rollout, eval_run_id, sim_engine=sim_engine)
         minimum = float(skill.eval_cfg["min_pass_rate"])
         if pass_rate < minimum:
             raise RegistrationError(

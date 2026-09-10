@@ -48,6 +48,22 @@ Flags you will actually use: `--tier` (T0..T4, S1..S3), `--embodiment
 `--env-baseline local` (trust the local frozen set) — are recorded in
 the run manifest; research agents run without them.
 
+`--sim-extra {sim,cuda}` picks the attested dependency/backend selection.
+`--sim-engine {genesis,nexus}` picks the physics engine realizing the
+scene (ADR-55); it defaults to `genesis` and is recorded in the manifest
+as `sim_engine`. `nexus` refuses before launch when the wheel is not
+installed (see [getting started](getting-started.md) §3b), and its results
+are not comparable with Genesis results.
+
+```bash
+uv run harness rollout --graph graphs/expert_t0.yaml --tier T0 \
+    --episodes 2 --seeds 0..1 --no-idea-gate --env-baseline local --sim-engine nexus
+```
+
+`--build-grace-s` overrides the scene-build wall grace added to the first
+episode of each launch (default 420 s, sized for Genesis; a Nexus scene
+builds in seconds).
+
 ## traces — query recorded evidence
 
 ```bash

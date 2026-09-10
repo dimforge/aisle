@@ -14,6 +14,19 @@ uv sync --extra sim
 Anything that touches the simulator needs the extra; plain sync is only
 for pure-unit work.
 
+That sync also removes the Nexus wheel, silently: `nexus3d` is not in the
+lock ([getting started](getting-started.md) §3b), so any `uv sync` drops
+it and `--sim-engine nexus` then refuses at the `sim_engine` gate with
+`simulation engine 'nexus' is not installed in this environment`.
+Reinstall it from the sibling checkouts:
+
+```bash
+uv run --extra sim --locked python tools/nexus_runtime.py install --nexus ../nexus --rapier ../rapier --kiss3d ../kiss3d
+```
+
+Keep the `--extra sim` (and `--locked`) on that command: a plain `uv run`
+re-syncs the default extras first and takes the simulator back out.
+
 ## Leaked simulator processes (the first thing to check)
 
 A timeout-killed or crashed `dora run` leaves orphaned node processes
@@ -25,7 +38,7 @@ Before debugging ANY perf/timing weirdness:
 
 ```bash
 uptime                          # load average sane for an idle box?
-ps aux | grep -E "dora|genesis" | grep -v grep
+ps aux | grep -E "dora|genesis|nexus" | grep -v grep
 ```
 
 Kill leftovers by their run working directory rather than pattern-
@@ -96,6 +109,26 @@ The refusal JSON says why; the common ones:
 - One machine, one sim run. Parallel sim runs (or a parallel `uv sync`
   / cargo build during a run) contend for the GPU/CPU and corrupt
   timing.
+
+## Nexus engine refusals (ADR-55, optional engine)
+
+- **`this nexus scene was superseded by a newer build_scene in this
+  process`**: the Nexus engine holds one live renderable scene per
+  process. A newer build takes the viewer's render nodes, and the older
+  handle's cameras raise from then on (its physics readbacks still work).
+  Build one scene per process, or read from the newest handle. The sim
+  tests build a fresh scene per test for exactly this reason.
+- **`nexus already initialized with backend 'X'; build_scene requires
+  'Y'`**: like `gs.init`, the backend is fixed at the first build and
+  cannot be mixed within a process. Set `AISLE_SIM_BACKEND` once
+  (`metal`, `webgpu`, `cuda` or `cpu`) and restart.
+- **`the installed nexus3d was built without the metal feature`** (or
+  `cuda`): the wheel was built for another GPU API. Rebuild it with
+  `tools/nexus_runtime.py install`, which defaults the feature per host
+  (`metal` on macOS, `webgpu` elsewhere) and takes `--feature` to override.
+- Nexus stepping determinism is not established, so a Nexus run that does
+  not replicate is not by itself a bug report; see
+  [determinism](determinism.md).
 
 ## Nondeterminism (same seed, different result)
 

@@ -158,6 +158,7 @@ def test_bridge_info_shape():
             perception="L0",
             segmentation_ids={},
             sim_backend="metal",
+            sim_engine="genesis",
         )
     )
     assert info == {
@@ -176,7 +177,7 @@ def test_bridge_info_shape():
         "perception": "L0",
         "segmentation_ids": {},
         "sim_backend": "metal",
-        # ADR-55: the engine that realized the scene, default genesis
+        # ADR-55: the engine that realized the scene
         "sim_engine": "genesis",
     }
     assert info["platform"]
@@ -471,6 +472,7 @@ def test_bridge_info_carries_the_l1_id_map():
             perception="L1",
             segmentation_ids={"amoxicillin": [16], "ibuprofen": [17]},
             sim_backend="cuda",
+            sim_engine="genesis",
         )
     )
     assert info["perception"] == "L1"
@@ -538,15 +540,17 @@ def test_publish_is_wired_to_the_gate_not_to_an_inline_check():
 
 
 def test_bridge_info_requires_the_rung_rather_than_defaulting_it():
-    """TC-9/BRG-8: `perception` and `segmentation_ids` are REQUIRED arguments.
-    A defaulted rung would attest "L0" in the trace for a run that executed L1
-    — the recorded-vs-actual divergence the rung refusal and the env scrub
-    exist to prevent, and one no test can catch because the default is a valid
-    value. Same discipline the docstring already argues for calibration."""
+    """TC-9/BRG-8/ADR-55: `perception`, `segmentation_ids` and `sim_engine` are
+    REQUIRED arguments. A defaulted rung would attest "L0" in the trace for a
+    run that executed L1 — the recorded-vs-actual divergence the rung refusal
+    and the env scrub exist to prevent, and one no test can catch because the
+    default is a valid value. A defaulted engine attests "genesis" for a run
+    that executed on Nexus for exactly the same reason. Same discipline the
+    docstring already argues for calibration."""
     import inspect
 
     sig = inspect.signature(make_bridge_info)
-    for name in ("perception", "segmentation_ids"):
+    for name in ("perception", "segmentation_ids", "sim_engine"):
         assert sig.parameters[name].default is inspect.Parameter.empty, name
 
 

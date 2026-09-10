@@ -5,8 +5,11 @@ Nexus is an optional engine outside the uv lock: this builds the `nexus3d`
 wheel with maturin from a nexus checkout (whose Cargo manifest patches the
 rapier crates to a rapier checkout), installs it into the project environment
 with `uv pip`, and writes a receipt naming both source commits so a run's
-`bridge_info` can be traced to the exact engine sources. CON-8: JSON on
-stdout, logs on stderr, exit 0 iff ok.
+`bridge_info` can be traced to the exact engine sources. `read_receipt()`
+is the public reader for that provenance: the run manifest and
+`env_hash.sim_engine_hash` record it, since the receipt is gitignored and
+local to the machine that built the wheel. CON-8: JSON on stdout, logs on
+stderr, exit 0 iff ok.
 """
 
 from __future__ import annotations
@@ -21,6 +24,41 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RECEIPT = ROOT / ".nexus-runtime-receipt.json"
 WHEEL_GLOB = "dimforge_nexus3d-*.whl"
+
+
+def receipt_path(root: Path | None = None) -> Path:
+    """Where the build receipt lives for a checkout (default: this one)."""
+    return (ROOT if root is None else Path(root)) / RECEIPT.name
+
+
+def read_receipt(root: Path | None = None) -> dict:
+    """The ADR-55 engine build provenance, for a run manifest to carry.
+
+    The receipt is gitignored and local to the machine that built the
+    wheel, so recording it at rollout time is the only trace of which
+    engine sources produced a run. Never raises: an absent or malformed
+    receipt is a reported fact, not an exception.
+
+    Returns {"installed": bool, "path": str, "receipt": dict | None,
+    "problem": str | None}; `receipt` holds the wheel name, version,
+    cargo feature, platform and the nexus/rapier/kiss3d commits.
+    """
+    path = receipt_path(root)
+    result: dict = {"installed": False, "path": str(path), "receipt": None, "problem": None}
+    if not path.is_file():
+        result["problem"] = (
+            f"no nexus build receipt at {path}; run `tools/nexus_runtime.py install`"
+        )
+        return result
+    try:
+        receipt = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        result["problem"] = f"unreadable nexus build receipt at {path}: {exc}"
+        return result
+    if not isinstance(receipt, dict):
+        result["problem"] = f"malformed nexus build receipt at {path}: expected a JSON object"
+        return result
+    return {"installed": True, "path": str(path), "receipt": receipt, "problem": None}
 
 
 def _run(command: list[str], cwd: Path) -> str:
@@ -107,9 +145,10 @@ def install(
 
 
 def verify(python: Path) -> dict:
-    if not RECEIPT.is_file():
-        raise FileNotFoundError(f"no receipt at {RECEIPT}; run `install` first")
-    receipt = json.loads(RECEIPT.read_text())
+    read = read_receipt()
+    if not read["installed"]:
+        raise FileNotFoundError(read["problem"])
+    receipt = read["receipt"]
     version = _run(
         [str(python), "-c", "import importlib.metadata as m; print(m.version('dimforge-nexus3d'))"],
         ROOT,
@@ -144,7 +183,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     ver = sub.add_parser("verify", help="check the installed wheel against the receipt")
     ver.add_argument("--python", type=Path, default=Path(sys.executable))
+    sub.add_parser("receipt", help="print the build provenance a run manifest records")
     args = parser.parse_args(argv)
+    if args.command == "receipt":
+        read = read_receipt()
+        print(json.dumps({"ok": read["installed"], **read}))
+        if read["problem"]:
+            print(read["problem"], file=sys.stderr)
+        return 0 if read["installed"] else 1
     try:
         if args.command == "install":
             receipt = install(args.nexus, args.rapier, args.kiss3d, args.python, args.feature)

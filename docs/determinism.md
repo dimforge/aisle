@@ -2,15 +2,22 @@
 
 Contract: same (seed, cfg, platform) ⇒ bitwise-identical initial
 `oracle_state`. Verified by `tests/sim/test_scene.py::test_build_determinism`
-on macOS arm64 (Metal backend, float32).
+on macOS arm64 (Metal backend, float32), and on the optional Nexus engine
+(ADR-55) by `tests/sim/test_nexus_scene.py::test_build_determinism`.
 
 Backend selection is explicit and recorded. `uv sync --extra sim` plus
 `harness rollout --sim-extra sim` uses Metal on Darwin and CPU elsewhere,
 even when a CUDA device is visible. `uv sync --extra cuda` plus
 `harness rollout --sim-extra cuda` uses CUDA on Linux and fails closed when
 the device is unavailable; it never silently retries on CPU. The selected
-extra, Genesis backend, and device are persisted in `manifest.json` beside
-the environment fingerprint. A pre-attestation development build executed on
+extra, engine, resolved backend, and device are persisted in `manifest.json`
+(`sim_extra`, `sim_engine`, `sim_backend`, `sim_device`) beside the
+environment fingerprint. `sim_engine` is the discriminator between the two
+engines' evidence: the frozen-set hash does not encode the engine.
+On Nexus the same two extras resolve through that engine's own table
+(`aisle.sim.select_nexus_backend`): `sim` is Metal on Darwin and WebGPU
+elsewhere, `cuda` is Linux-only and fails closed the same way.
+A pre-attestation development build executed on
 an NVIDIA GeForce RTX 5090 with driver 580.126.09 and PyTorch 2.13.0+cu130;
 that historical run is not evidence for the corrected attested path. A fresh
 hardware run is required before making a performance or reproducibility claim.
@@ -23,6 +30,17 @@ Known platform caveats — recorded here rather than hidden (SCN-7):
   reduction order may diverge once physics steps run (relevant from T05
   onward; measure before promising cross-platform reproducibility).
 - genesis is initialized once per process (backend fixed at first
-  build_scene call); mixing backends in one process is unsupported.
+  build_scene call); mixing backends in one process is unsupported. Nexus
+  does the same in `_ensure_nexus` (`src/aisle/sim/nexus_backend.py`): one
+  engine per process, and a later build asking for another backend is
+  refused. That engine also holds one live renderable scene: a newer
+  `build_scene` supersedes the previous scene's render nodes, so the older
+  handle keeps its physics readbacks but its cameras raise.
+- Nexus stepping determinism is not established (ADR-55). Only build
+  determinism is covered, by `tests/sim/test_nexus_scene.py`; the GPU broad
+  phase and constraint coloring use atomics, so run-to-run bitwise equality
+  after the first step is unmeasured. Nexus evidence must not be treated as
+  reproducible until it is measured, and Genesis remains the only engine
+  behind the measured record.
 - CUDA startup errors propagate; AISLE never silently retries initialization
   on CPU. Metal-vs-CUDA post-step divergence has not yet been quantified.

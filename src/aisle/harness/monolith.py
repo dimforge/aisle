@@ -141,8 +141,12 @@ def run(
     template: str = TEMPLATE_GRAPH,
     verifier: str = "oracle",
     reset_mode: str = "teleport",
+    sim_engine: str | None = None,
 ) -> dict:
-    """Stamp the admitted monolithic template and roll it out through the trusted runner."""
+    """Stamp the admitted monolithic template and roll it out through the trusted runner.
+
+    sim_engine (ADR-55) reaches the runner unchanged: the launcher must not
+    force genesis on a module the operator asked to run on another engine."""
     if tier != "T1":
         return {
             "ok": False,
@@ -209,6 +213,7 @@ def run(
         timeout_s=timeout_s,
         embodiment=embodiment,
         **({"record_simulator_work": True} if record_simulator_work else {}),
+        sim_engine=sim_engine,
     )
     return {**report, "module": pre, "campaign_purpose": CAMPAIGN_PURPOSE}
 
