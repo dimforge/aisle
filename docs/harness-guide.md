@@ -49,11 +49,17 @@ Flags you will actually use: `--tier` (T0..T4, S1..S3), `--embodiment
 the run manifest; research agents run without them.
 
 `--sim-extra {sim,cuda}` picks the attested dependency/backend selection.
-`--sim-engine {genesis,nexus}` picks the physics engine realizing the
-scene (ADR-55); it defaults to `genesis` and is recorded in the manifest
-as `sim_engine`. `nexus` refuses before launch when the wheel is not
-installed (see [getting started](getting-started.md) §3b), and its results
-are not comparable with Genesis results.
+`--sim-engine {genesis,nexus,rapier}` picks the physics engine realizing
+the scene (ADR-55, ADR-56); it defaults to `genesis` and is recorded in the
+manifest as `sim_engine`, beside a digest of the engine realization and the
+wheel's build receipt. `nexus` (GPU) and `rapier` (CPU, rendering through
+the Nexus viewer) refuse before launch when their wheels are not installed
+(see [getting started](getting-started.md) §3b and §3c), and results are not
+comparable across engines. A graph whose bridge node declares
+`AISLE_SIM_ENGINE` owns the choice: passing a different `--sim-engine` is
+refused rather than silently overridden. The same flag is on
+`harness monolith run`, `harness fault calibrate`, `harness skill register`
+and `harness fleet`.
 
 ```bash
 uv run harness rollout --graph graphs/expert_t0.yaml --tier T0 \
@@ -61,8 +67,9 @@ uv run harness rollout --graph graphs/expert_t0.yaml --tier T0 \
 ```
 
 `--build-grace-s` overrides the scene-build wall grace added to the first
-episode of each launch (default 420 s, sized for Genesis; a Nexus scene
-builds in seconds).
+episode of each launch. The default is engine-derived: 420 s for Genesis,
+which compiles kernels, and 60 s for the other two, which build a scene in
+seconds.
 
 ## traces — query recorded evidence
 

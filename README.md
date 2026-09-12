@@ -32,9 +32,11 @@ Agentic auto-research for robot manipulation on open infrastructure:
 coding agents (Claude Code / Codex) compose and evolve **typed dora-rs
 dataflows** against a **Genesis** physics scene, with frozen
 verification/reset and scoped safety structure. The scene contract is
-engine neutral; an optional second engine ([Nexus](docs/decisions/ADR-55.md),
-`--sim-engine nexus`) runs the same graphs for development, while Genesis
-stays the default and the only engine behind the measured record.
+engine neutral; two optional engines run the same graphs for development,
+[Nexus](docs/decisions/ADR-55.md) on the GPU and
+[rapier](docs/decisions/ADR-56.md) on the CPU (`--sim-engine nexus|rapier`),
+while Genesis stays the default and the only engine behind the measured
+record.
 <!-- claim:typed-dataflow-causal/readme -->
 The **UNRUN confirmatory claim under test** is whether a
 typed dataflow substrate makes agentic robotics faster, safer, more

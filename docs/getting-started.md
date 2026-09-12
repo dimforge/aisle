@@ -161,23 +161,28 @@ comparable across engines.
 
 How far the Nexus path is actually exercised, as of today:
 
-- The **pharmacy desk** scene with the franka and so101 embodiments is
-  covered by `tests/sim/test_nexus_scene.py` (placements, IK and home pose,
-  the overhead/wrist passes, stepping and teleport reset, batched builds).
-- The **retail store** scene (`build_store`) and the **mobile** embodiment
-  are implemented on the Nexus backend but have no Nexus test.
-- The **L1/L2** perception rungs have no Nexus test either. Their raw
-  material is covered on the desk scene (one pass yields rgb, metric depth
-  and a segmentation map using the scene's own ids), but no rollout on the
-  rungs has been run against Nexus.
+- The **pharmacy desk** scene with the franka and so101 embodiments, the
+  **retail store** scene and the **mobile** embodiment are all covered by
+  `tests/sim/test_nexus_scene.py` (placements, IK and home pose, the
+  overhead/wrist passes, the realized wrist calibration, stepping, teleport
+  reset, re-basing, batched builds).
+- The **L0 and L1** rungs run end to end: single-seed expert rollouts of
+  T0, T1 and T4 succeed, and `test_l1_estimate_matches_nexus_ground_truth`
+  pins the estimator against ground truth inside 1 mm.
+- The **L2** rung does not work on Nexus. The open-vocabulary detector
+  refuses every frame (`identity margin -0.016 under the 0.01 floor`), so
+  expert_t1_l2 and expert_t2 fail with `never_grasped`. The cause is render
+  fidelity rather than physics: Nexus box pixels come back at 0.47
+  saturation against a declared 0.73 albedo, and the frame is flatter than
+  Genesis's.
 - **Nexus stepping determinism is not established** (ADR-55): only build
   determinism is. See [determinism](determinism.md) before reading anything
   reproducible into a Nexus run.
 
 Nexus is not part of the lock. Build its Python module from sibling
 checkouts: nexus on its `aisle-backend` branch, whose manifest patches the
-rapier crates to a rapier checkout on `fix-urdf-rpy` (URDF roll-pitch-yaw
-fix) and kiss3d to a kiss3d checkout on `fix-shared-window-managers`
+rapier crates to a rapier checkout carrying the URDF roll-pitch-yaw fix
+(`fix-urdf-rpy-master`, that fix cherry-picked onto rapier master) and kiss3d to a kiss3d checkout on `fix-shared-window-managers`
 (offscreen sensor surfaces). Then install the wheel into the project
 environment:
 
@@ -206,6 +211,30 @@ stiffness, PGS iterations) live in `src/aisle/sim/nexus_physics.toml`;
 `tools/nexus_grasp_replay.py --run runs/<id>` replays a recorded run's joint
 and gripper commands into a fresh Nexus scene under overrides, which is how
 those values were chosen and how a grasp regression is reproduced offline.
+
+## 3c. Optional: run the scene on the rapier CPU engine (ADR-56)
+
+The third engine steps the same scenes with
+[rapier](https://github.com/dimforge/rapier) on the CPU and renders them
+through the Nexus viewer, so a rapier run and a Nexus run differ only in the
+solver. Select it with `harness rollout --sim-engine rapier`.
+
+It needs BOTH wheels: the Nexus one above for the renderer, and the rapier
+Python bindings, which are also outside the lock. Build them from the same
+rapier checkout:
+
+```bash
+uv run --no-sync python tools/rapier_runtime.py install --rapier ../rapier
+```
+
+`--no-sync` matters here: a syncing `uv run` would reinstall the locked
+environment first and take the Nexus wheel back out, which is the renderer
+this engine needs.
+
+`tools/rapier_runtime.py verify` reports the solver's receipt and the
+renderer's together, so a half-installed environment is visible before a run
+rather than at the first render. Its engine constants live in
+`src/aisle/sim/rapier_physics.toml`, alongside the Nexus ones.
 
 ## 4. Where to go next
 

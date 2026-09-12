@@ -261,7 +261,7 @@ inference.
 | [docs/decisions/ADR-53.md](../decisions/ADR-53.md) | ADR-53 — Safety evidence uses exact exposures and fixed proposals | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
 | [docs/decisions/ADR-54.md](../decisions/ADR-54.md) | ADR-54 — Semantic prevention requires a separate trusted authorizer | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
 | [docs/decisions/ADR-55.md](../decisions/ADR-55.md) | ADR-55: a second physics engine (Nexus) behind the scene contract | ACCEPTED (development); a spec-change PR is still owed (see below). |
-| [docs/decisions/ADR-56.md](../decisions/ADR-56.md) | ADR-56 — Use a replicated block-randomized session trial for H4 | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
+| [docs/decisions/ADR-56.md](../decisions/ADR-56.md) | ADR-56 — A CPU engine: rapier physics behind the Nexus renderer | accepted (CON-15). Trigger: ADR-55 left stepping determinism |
 | [docs/decisions/ADR-57.md](../decisions/ADR-57.md) | ADR-57 — Compare diagnostic evidence with sealed paired fault sessions | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
 | [docs/decisions/ADR-58.md](../decisions/ADR-58.md) | ADR-58 — Hardware evidence begins at a pinned physical station | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |
 | [docs/decisions/ADR-59.md](../decisions/ADR-59.md) | ADR-59 — Reproduction starts outside the campaign machine | PROPOSED — owner review required under CON-14. Date: 2026-08-31. |

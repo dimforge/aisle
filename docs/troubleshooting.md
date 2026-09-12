@@ -14,14 +14,19 @@ uv sync --extra sim
 Anything that touches the simulator needs the extra; plain sync is only
 for pure-unit work.
 
-That sync also removes the Nexus wheel, silently: `nexus3d` is not in the
-lock ([getting started](getting-started.md) §3b), so any `uv sync` drops
-it and `--sim-engine nexus` then refuses at the `sim_engine` gate with
-`simulation engine 'nexus' is not installed in this environment`.
-Reinstall it from the sibling checkouts:
+That sync also removes the optional engine wheels, silently: neither
+`nexus3d` nor `rapier3d` is in the
+lock ([getting started](getting-started.md) §3b and §3c), so any `uv sync`
+drops them and `--sim-engine nexus` then refuses at the `sim_engine` gate
+with `simulation engine 'nexus' is not installed in this environment`.
+Reinstall them from the sibling checkouts:
 
 ```bash
 uv run --extra sim --locked python tools/nexus_runtime.py install --nexus ../nexus --rapier ../rapier --kiss3d ../kiss3d
+```
+
+```bash
+uv run --no-sync python tools/rapier_runtime.py install --rapier ../rapier
 ```
 
 Keep the `--extra sim` (and `--locked`) on that command: a plain `uv run`
@@ -38,7 +43,7 @@ Before debugging ANY perf/timing weirdness:
 
 ```bash
 uptime                          # load average sane for an idle box?
-ps aux | grep -E "dora|genesis|nexus" | grep -v grep
+ps aux | grep -E "dora|genesis|nexus|rapier" | grep -v grep
 ```
 
 Kill leftovers by their run working directory rather than pattern-

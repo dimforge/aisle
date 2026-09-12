@@ -10,6 +10,9 @@ backend for each, and dispatches scene construction:
 - ``nexus``: `aisle.sim.nexus_backend`, which rebuilds the same scenes from
   the frozen pure functions (layout, placements, textures) on the Nexus
   GPU engine behind the same object surface.
+- ``rapier``: `aisle.sim.rapier_backend` (ADR-56), the same scenes stepped by
+  rapier on the CPU. It borrows the Nexus viewer as its renderer, so it needs
+  both wheels, and gains a deterministic single-threaded step in exchange.
 
 Nothing here imports a simulator at module level (CON-12): the engine name
 alone is a plain string decision, and every simulator import happens inside
@@ -22,14 +25,25 @@ import os
 from collections.abc import Mapping
 from typing import Any
 
-ENGINES: tuple[str, ...] = ("genesis", "nexus")
+ENGINES: tuple[str, ...] = ("genesis", "nexus", "rapier")
 DEFAULT_ENGINE = "genesis"
 ENGINE_ENV_VAR = "AISLE_SIM_ENGINE"
 
 # Backend names each engine accepts through AISLE_SIM_BACKEND (BRG-6).
+# rapier steps on the CPU and takes no other backend; its renderer is the
+# Nexus viewer, whose adapter choice is not the physics backend (ADR-56).
 ENGINE_BACKENDS: dict[str, tuple[str, ...]] = {
     "genesis": ("cpu", "metal", "cuda"),
     "nexus": ("webgpu", "metal", "cuda", "cpu"),
+    "rapier": ("cpu",),
+}
+
+# The importable module each engine needs. rapier needs two: the solver and
+# the Nexus viewer it renders through.
+ENGINE_MODULES: dict[str, tuple[str, ...]] = {
+    "genesis": ("genesis",),
+    "nexus": ("nexus3d",),
+    "rapier": ("rapier3d", "nexus3d"),
 }
 
 
@@ -66,6 +80,16 @@ def select_nexus_backend(sim_extra: str, platform_name: str, cuda_available: boo
     return "cuda"
 
 
+def select_rapier_backend(sim_extra: str, platform_name: str, cuda_available: bool = False) -> str:
+    """rapier steps on the CPU on every platform (ADR-56), so the portable
+    extra resolves to ``cpu`` and the CUDA extra has nothing to select."""
+    if sim_extra == "sim":
+        return "cpu"
+    if sim_extra != "cuda":
+        raise ValueError(f"unknown simulation extra {sim_extra!r}; expected 'sim' or 'cuda'")
+    raise ValueError("the rapier engine is CPU only; the CUDA extra selects no rapier backend")
+
+
 def select_sim_backend(
     engine: str, sim_extra: str, platform_name: str, cuda_available: bool = False
 ) -> str:
@@ -75,6 +99,8 @@ def select_sim_backend(
         from aisle.scenes.pharmacy import select_genesis_backend
 
         return select_genesis_backend(sim_extra, platform_name, cuda_available)
+    if engine == "rapier":
+        return select_rapier_backend(sim_extra, platform_name, cuda_available)
     return select_nexus_backend(sim_extra, platform_name, cuda_available)
 
 
@@ -90,16 +116,20 @@ def validate_backend(engine: str, backend: str | None) -> str | None:
 
 
 def engine_available(engine: str) -> bool:
-    """Whether the engine's Python package is importable (collection-safe:
-    uses find_spec, never imports the simulator)."""
+    """Whether every Python package the engine needs is importable
+    (collection-safe: uses find_spec, never imports the simulator). rapier
+    needs its renderer too, so a missing nexus3d refuses it here rather than
+    at the first render (ADR-56)."""
     import importlib.util
 
-    module = {"genesis": "genesis", "nexus": "nexus3d"}[normalize_engine(engine)]
-    return importlib.util.find_spec(module) is not None
+    modules = ENGINE_MODULES[normalize_engine(engine)]
+    return all(importlib.util.find_spec(module) is not None for module in modules)
 
 
 def engine_version(engine: str) -> str:
-    """The installed simulator's version string, for `bridge_info`."""
+    """The installed simulator's version string, for `bridge_info`. The
+    rapier engine reports its solver's version; its renderer is attested
+    separately through the run's engine build receipt (ADR-56)."""
     engine = normalize_engine(engine)
     if engine == "genesis":
         import genesis
@@ -107,12 +137,15 @@ def engine_version(engine: str) -> str:
         return str(genesis.__version__)
     from importlib.metadata import PackageNotFoundError, version
 
+    dist, module = (
+        ("rapier3d", "rapier3d") if engine == "rapier" else ("dimforge-nexus3d", "nexus3d")
+    )
     try:
-        return version("dimforge-nexus3d")
+        return version(dist)
     except PackageNotFoundError:
-        import nexus3d
+        import importlib
 
-        return str(getattr(nexus3d, "__version__", "unknown"))
+        return str(getattr(importlib.import_module(module), "__version__", "unknown"))
 
 
 def build_scene(engine: str, *args: Any, **kwargs: Any):
@@ -122,6 +155,10 @@ def build_scene(engine: str, *args: Any, **kwargs: Any):
         from aisle.scenes.pharmacy import build_scene as genesis_build_scene
 
         return genesis_build_scene(*args, **kwargs)
+    if engine == "rapier":
+        from aisle.sim.rapier_backend import build_scene as rapier_build_scene
+
+        return rapier_build_scene(*args, **kwargs)
     from aisle.sim.nexus_backend import build_scene as nexus_build_scene
 
     return nexus_build_scene(*args, **kwargs)
@@ -134,6 +171,10 @@ def build_store(engine: str, *args: Any, **kwargs: Any):
         from aisle.scenes.store import build_store as genesis_build_store
 
         return genesis_build_store(*args, **kwargs)
+    if engine == "rapier":
+        from aisle.sim.rapier_backend import build_store as rapier_build_store
+
+        return rapier_build_store(*args, **kwargs)
     from aisle.sim.nexus_backend import build_store as nexus_build_store
 
     return nexus_build_store(*args, **kwargs)

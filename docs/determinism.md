@@ -42,5 +42,14 @@ Known platform caveats — recorded here rather than hidden (SCN-7):
   after the first step is unmeasured. Nexus evidence must not be treated as
   reproducible until it is measured, and Genesis remains the only engine
   behind the measured record.
+- The rapier engine (ADR-56) is the one with stepping determinism, and it is
+  measured: `tests/sim/test_rapier_scene.py::test_bitwise_step_determinism`
+  drops a box into contact in two identically seeded worlds, steps both 200
+  times and requires bitwise identical `oracle_state` and joint coordinates.
+  It steps single-threaded on the CPU by configuration
+  (`num_threads = 1` in `src/aisle/sim/rapier_physics.toml`), which is what
+  removes the only ordering variation it has. Cross-platform bit equality is
+  a separate claim and is not measured; rapier's `determinism` cargo feature
+  (`tools/rapier_runtime.py install --determinism`) is what that would need.
 - CUDA startup errors propagate; AISLE never silently retries initialization
   on CPU. Metal-vs-CUDA post-step divergence has not yet been quantified.
