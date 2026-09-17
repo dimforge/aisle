@@ -88,7 +88,7 @@ testpaths = ["tests"]
 addopts = "--strict-markers"
 markers = [
     "unit: no sim, no dora, <1 s each (CON-12)",
-    "sim: imports a simulator (genesis or nexus3d); headless (CON-12)",
+    "sim: imports genesis; headless (CON-12)",
     "graph: launches a dora dataflow (CON-12)",
     "accept: spec-acceptance; cites requirement IDs (CON-12)",
 ]

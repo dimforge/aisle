@@ -34,7 +34,7 @@ stayed outside it).
 | `skills/` | registered agent-authored skills | — |
 | `skills_pending_review/` | recovered campaign skills, not registered | — |
 | `specs/` | numbered specs with MUST ids (000 = constitution) | — |
-| `src/` | the aisle package: scenes, bridge, verifier, reset, harness, nodes | `src/aisle/embodiment.py`, `src/aisle/kinematics.py`, `src/aisle/mobility`, `src/aisle/nodes/budget_guard.py`, `src/aisle/reset`, `src/aisle/scenes`, `src/aisle/topics.py`, `src/aisle/turn_node.py`, `src/aisle/turns.py`, `src/aisle/verifier` |
+| `src/` | the aisle package: scenes, bridge, sim engines, verifier, reset, harness, nodes | `src/aisle/embodiment.py`, `src/aisle/kinematics.py`, `src/aisle/mobility`, `src/aisle/nodes/budget_guard.py`, `src/aisle/reset`, `src/aisle/scenes`, `src/aisle/topics.py`, `src/aisle/turn_node.py`, `src/aisle/turns.py`, `src/aisle/verifier` |
 | `templates/` | scaffolding for new artifacts | — |
 | `tests/` | unit / sim / graph suites | — |
 | `tools/` | CI, env_hash, trace_check, campaign runners | — |
@@ -50,35 +50,35 @@ stayed outside it).
 
 ## Graphs
 
-| Graph | Scene/scenario | Embodiment | Perception | Nodes |
-|---|---|---|---|---:|
-| [graphs/agent_campaign.yaml](../../graphs/agent_campaign.yaml) | store / S3 | mobile | L0 (default) | 8 |
-| [graphs/eval_hybrid_t1.yaml](../../graphs/eval_hybrid_t1.yaml) | pharmacy (default) / — | franka (default) | L1 | 11 |
-| [graphs/eval_ik_transfer_v2.yaml](../../graphs/eval_ik_transfer_v2.yaml) | pharmacy (default) / — | franka (default) | L1 | 10 |
-| [graphs/eval_s1_driver_v2.yaml](../../graphs/eval_s1_driver_v2.yaml) | store / S1 | mobile | L0 (default) | 10 |
-| [graphs/eval_s3_driver_v1.yaml](../../graphs/eval_s3_driver_v1.yaml) | store / S3 | mobile | L0 (default) | 8 |
-| [graphs/eval_t2_stack.yaml](../../graphs/eval_t2_stack.yaml) | pharmacy (default) / — | franka (default) | L2 | 11 |
-| [graphs/eval_vla_smolvla_so101.yaml](../../graphs/eval_vla_smolvla_so101.yaml) | pharmacy (default) / — | so101 | L1 | 8 |
-| [graphs/eval_vla_smolvla_so101_lockstep.yaml](../../graphs/eval_vla_smolvla_so101_lockstep.yaml) | pharmacy (default) / — | so101 | L1 | 8 |
-| [graphs/eval_vla_smolvla_t1.yaml](../../graphs/eval_vla_smolvla_t1.yaml) | pharmacy (default) / — | franka (default) | L1 | 8 |
-| [graphs/expert_s1.yaml](../../graphs/expert_s1.yaml) | store / S1 | mobile | L0 (default) | 10 |
-| [graphs/expert_t0.yaml](../../graphs/expert_t0.yaml) | pharmacy (default) / — | franka (default) | L0 (default) | 10 |
-| [graphs/expert_t1.yaml](../../graphs/expert_t1.yaml) | pharmacy (default) / — | franka (default) | L1 | 10 |
-| [graphs/expert_t1_behavioral.yaml](../../graphs/expert_t1_behavioral.yaml) | pharmacy (default) / — | franka (default) | L1 | 10 |
-| [graphs/expert_t1_l2.yaml](../../graphs/expert_t1_l2.yaml) | pharmacy (default) / — | franka (default) | L2 | 10 |
-| [graphs/expert_t2.yaml](../../graphs/expert_t2.yaml) | pharmacy (default) / — | franka (default) | L2 | 11 |
-| [graphs/expert_t3.yaml](../../graphs/expert_t3.yaml) | pharmacy (default) / — | franka (default) | L1 | 10 |
-| [graphs/expert_t4.yaml](../../graphs/expert_t4.yaml) | pharmacy (default) / — | franka (default) | L1 | 11 |
-| [graphs/expert_t4_inc2.yaml](../../graphs/expert_t4_inc2.yaml) | pharmacy (default) / — | franka (default) | L1 | 12 |
-| [graphs/monolithic_t1.yaml](../../graphs/monolithic_t1.yaml) | pharmacy (default) / — | franka (default) | L1 | 7 |
-| [graphs/monolithic_t1_l2.yaml](../../graphs/monolithic_t1_l2.yaml) | pharmacy (default) / — | franka (default) | L2 | 7 |
-| [graphs/pilot_t1_l2_monolithic.yaml](../../graphs/pilot_t1_l2_monolithic.yaml) | pharmacy (default) / — | franka (default) | L2 | 8 |
-| [graphs/pilot_t1_l2_typed.yaml](../../graphs/pilot_t1_l2_typed.yaml) | pharmacy (default) / — | franka (default) | L2 | 11 |
-| [graphs/shield_t0_none_adversary.yaml](../../graphs/shield_t0_none_adversary.yaml) | pharmacy (default) / — | franka (default) | L0 (default) | 12 |
-| [graphs/shield_t0_oracle.yaml](../../graphs/shield_t0_oracle.yaml) | pharmacy (default) / — | franka (default) | L0 (default) | 11 |
-| [graphs/shield_t0_oracle_adversary.yaml](../../graphs/shield_t0_oracle_adversary.yaml) | pharmacy (default) / — | franka (default) | L0 (default) | 12 |
-| [graphs/shield_t1_sensor.yaml](../../graphs/shield_t1_sensor.yaml) | pharmacy (default) / — | franka (default) | L1 | 11 |
-| [graphs/shield_t1_sensor_adversary.yaml](../../graphs/shield_t1_sensor_adversary.yaml) | pharmacy (default) / — | franka (default) | L1 | 12 |
+| Graph | Scene/scenario | Embodiment | Perception | Engine | Nodes |
+|---|---|---|---|---|---:|
+| [graphs/agent_campaign.yaml](../../graphs/agent_campaign.yaml) | store / S3 | mobile | L0 (default) | genesis (default) | 8 |
+| [graphs/eval_hybrid_t1.yaml](../../graphs/eval_hybrid_t1.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 11 |
+| [graphs/eval_ik_transfer_v2.yaml](../../graphs/eval_ik_transfer_v2.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 10 |
+| [graphs/eval_s1_driver_v2.yaml](../../graphs/eval_s1_driver_v2.yaml) | store / S1 | mobile | L0 (default) | genesis (default) | 10 |
+| [graphs/eval_s3_driver_v1.yaml](../../graphs/eval_s3_driver_v1.yaml) | store / S3 | mobile | L0 (default) | genesis (default) | 8 |
+| [graphs/eval_t2_stack.yaml](../../graphs/eval_t2_stack.yaml) | pharmacy (default) / — | franka (default) | L2 | genesis (default) | 11 |
+| [graphs/eval_vla_smolvla_so101.yaml](../../graphs/eval_vla_smolvla_so101.yaml) | pharmacy (default) / — | so101 | L1 | genesis (default) | 8 |
+| [graphs/eval_vla_smolvla_so101_lockstep.yaml](../../graphs/eval_vla_smolvla_so101_lockstep.yaml) | pharmacy (default) / — | so101 | L1 | genesis (default) | 8 |
+| [graphs/eval_vla_smolvla_t1.yaml](../../graphs/eval_vla_smolvla_t1.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 8 |
+| [graphs/expert_s1.yaml](../../graphs/expert_s1.yaml) | store / S1 | mobile | L0 (default) | genesis (default) | 10 |
+| [graphs/expert_t0.yaml](../../graphs/expert_t0.yaml) | pharmacy (default) / — | franka (default) | L0 (default) | genesis (default) | 10 |
+| [graphs/expert_t1.yaml](../../graphs/expert_t1.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 10 |
+| [graphs/expert_t1_behavioral.yaml](../../graphs/expert_t1_behavioral.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 10 |
+| [graphs/expert_t1_l2.yaml](../../graphs/expert_t1_l2.yaml) | pharmacy (default) / — | franka (default) | L2 | genesis (default) | 10 |
+| [graphs/expert_t2.yaml](../../graphs/expert_t2.yaml) | pharmacy (default) / — | franka (default) | L2 | genesis (default) | 11 |
+| [graphs/expert_t3.yaml](../../graphs/expert_t3.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 10 |
+| [graphs/expert_t4.yaml](../../graphs/expert_t4.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 11 |
+| [graphs/expert_t4_inc2.yaml](../../graphs/expert_t4_inc2.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 12 |
+| [graphs/monolithic_t1.yaml](../../graphs/monolithic_t1.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 7 |
+| [graphs/monolithic_t1_l2.yaml](../../graphs/monolithic_t1_l2.yaml) | pharmacy (default) / — | franka (default) | L2 | genesis (default) | 7 |
+| [graphs/pilot_t1_l2_monolithic.yaml](../../graphs/pilot_t1_l2_monolithic.yaml) | pharmacy (default) / — | franka (default) | L2 | genesis (default) | 8 |
+| [graphs/pilot_t1_l2_typed.yaml](../../graphs/pilot_t1_l2_typed.yaml) | pharmacy (default) / — | franka (default) | L2 | genesis (default) | 11 |
+| [graphs/shield_t0_none_adversary.yaml](../../graphs/shield_t0_none_adversary.yaml) | pharmacy (default) / — | franka (default) | L0 (default) | genesis (default) | 12 |
+| [graphs/shield_t0_oracle.yaml](../../graphs/shield_t0_oracle.yaml) | pharmacy (default) / — | franka (default) | L0 (default) | genesis (default) | 11 |
+| [graphs/shield_t0_oracle_adversary.yaml](../../graphs/shield_t0_oracle_adversary.yaml) | pharmacy (default) / — | franka (default) | L0 (default) | genesis (default) | 12 |
+| [graphs/shield_t1_sensor.yaml](../../graphs/shield_t1_sensor.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 11 |
+| [graphs/shield_t1_sensor_adversary.yaml](../../graphs/shield_t1_sensor_adversary.yaml) | pharmacy (default) / — | franka (default) | L1 | genesis (default) | 12 |
 
 ### Graph node membership
 
@@ -169,10 +169,10 @@ stayed outside it).
 | `harness exposure ledger` | `--run`, `--campaign-id`, `--source-map`, `--output` |
 | `harness exposure wording` | `--output`, `--root` |
 | `harness fault assign` | `--bank`, `--seed-file`, `--block`, `--session`, `--cells`, `--output` |
-| `harness fault calibrate` | `--bank`, `--clean-run`, `--clean-commit`, `--graph`, `--seeds`, `--tier`, `--embodiment`, `--perception`, `--staging`, `--raw-store`, `--campaign-id`, `--only`, `--output`, `--root` |
+| `harness fault calibrate` | `--bank`, `--clean-run`, `--clean-commit`, `--graph`, `--seeds`, `--tier`, `--embodiment`, `--perception`, `--staging`, `--raw-store`, `--campaign-id`, `--only`, `--output`, `--root`, `--sim-engine` |
 | `harness fault leakage` | `--report`, `--probe`, `--output` |
 | `harness fault validate` | `--bank`, `--root`, `--tool-root` |
-| `harness fleet` | `--graph`, `--agents`, `--episodes`, `--seeds`, `--out`, `--timeout-s`, `--root` |
+| `harness fleet` | `--graph`, `--agents`, `--episodes`, `--seeds`, `--out`, `--timeout-s`, `--root`, `--sim-engine` |
 | `harness freeze build` | `--declaration`, `--output`, `--timestamp`, `--timestamp-source`, `--root` |
 | `harness freeze check` | `--manifest`, `--root`, `--allow-withheld-seeds` |
 | `harness hardware dry-run` | `--seed`, `--output` |
@@ -181,7 +181,7 @@ stayed outside it).
 | `harness monolith describe` | `--embodiment` |
 | `harness monolith interface` | `--root`, `--candidate` |
 | `harness monolith parity` | `--typed`, `--monolithic`, `--output`, `--root`, `--candidate` |
-| `harness monolith run` | `--module`, `--tier`, `--embodiment`, `--episodes`, `--seeds`, `--run-id`, `--timeout-s`, `--no-idea-gate`, `--root`, `--template`, `--verifier`, `--reset`, `--worker-config`, `--worker-config-sha256` |
+| `harness monolith run` | `--module`, `--tier`, `--embodiment`, `--episodes`, `--seeds`, `--run-id`, `--timeout-s`, `--no-idea-gate`, `--root`, `--template`, `--verifier`, `--reset`, `--sim-engine`, `--worker-config`, `--worker-config-sha256` |
 | `harness monolith table` | `--write`, `--root`, `--candidate` |
 | `harness perception audit` | `--run`, `--envelope`, `--output` |
 | `harness probe` | `--dataflow`, `--topic`, `--for`, `--root` |
@@ -190,7 +190,7 @@ stayed outside it).
 | `harness rollout` | `--graph`, `--tier`, `--embodiment`, `--episodes`, `--seeds`, `--reset`, `--verifier`, `--sim-extra`, `--sim-engine`, `--build-grace-s`, `--root`, `--no-idea-gate`, `--perception`, `--run-id`, `--per-episode-wall-s`, `--env-baseline`, `--timeout-s` |
 | `harness semantic corpus` | `--seed`, `--per-condition`, `--output` |
 | `harness semantic run` | `--corpus`, `--analysis-seed`, `--output` |
-| `harness skill register` | `<skill_dir>`, `--root`, `--sandbox`, `--run-id` |
+| `harness skill register` | `<skill_dir>`, `--root`, `--sandbox`, `--sim-engine`, `--run-id` |
 | `harness stats analyze` | `--protocol`, `--records`, `--output` |
 | `harness stats power` | `--protocol`, `--output` |
 | `harness stats validate` | `--protocol`, `--purpose`, `--output` |

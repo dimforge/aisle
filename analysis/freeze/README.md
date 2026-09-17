@@ -233,3 +233,10 @@ macOS sandbox denial log with start and end controls. A log with missing
 reports or unprobed executable names remains incomplete. The inherited seed
 commitments and all pending gates remain unchanged; these registrations do not
 authorize collection.
+
+BND v15, FLT v7, CSE v27 and pilot v13 supersede v14, v6, v26 and v12 after the
+ADR-55/ADR-56 engine seam moved three matched sources: the shared harness CLI,
+the rollout runner and the simulator bridge now select the physics engine
+behind `AISLE_SIM_ENGINE`. Calibration rules, seed lineages, decision rules and
+every pending gate are preserved, and Genesis remains the default and the only
+engine behind these campaigns.
