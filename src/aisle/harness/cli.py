@@ -93,6 +93,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_sim_engine_flag(roll)
     roll.add_argument(
+        "--episode-timeout-s",
+        type=int,
+        default=None,
+        help="sim seconds per episode, overriding the tier default (HAR-1); an "
+        "expert that finishes its work early otherwise idles to expiry",
+    )
+    roll.add_argument(
         "--build-grace-s",
         type=int,
         default=None,
@@ -883,6 +890,7 @@ def main() -> int:
             per_episode_wall_s=args.per_episode_wall_s,
             sim_engine=args.sim_engine,
             build_grace_s=args.build_grace_s,
+            episode_timeout_s_override=args.episode_timeout_s,
         )
         return emit_report(report, lambda level, e: f"rollout {level}: {e}")
 

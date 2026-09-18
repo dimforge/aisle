@@ -114,7 +114,10 @@ def a7_per_episode_budget_s(episode_timeout_s: int, per_episode_budget_s: int) -
 
 
 def resolve_budgets(
-    tier: str, verifier: str, per_episode_wall_override_s: int | None = None
+    tier: str,
+    verifier: str,
+    per_episode_wall_override_s: int | None = None,
+    episode_timeout_override_s: int | None = None,
 ) -> tuple[int, int]:
     """(episode timeout in SIM seconds, per-episode WALL budget) for a run.
 
@@ -144,6 +147,18 @@ def resolve_budgets(
                 "measured retail A7 budget with an ADR-21 re-budget."
             )
         per_episode_budget_s = a7_per_episode_budget_s(episode_timeout_s, per_episode_budget_s)
+    if episode_timeout_override_s is not None:
+        # HAR-1: the SIM budget an episode gets. The tier default sizes the
+        # worst case, but an expert that finishes its work early then idles
+        # to expiry burns the rest of the clamp for nothing: the measured S1
+        # run stopped commanding at 147 sim s and stepped a still scene for
+        # the remaining 453. Shortening it changes what a timeout MEANS, so
+        # it is an explicit operator choice, recorded in the manifest, never
+        # a default.
+        episode_timeout_s = int(episode_timeout_override_s)
+        per_episode_budget_s = min(
+            per_episode_budget_s, a7_per_episode_budget_s(episode_timeout_s, 0)
+        )
     if per_episode_wall_override_s is not None:
         # lockstep VLA eval (ADR-38 amendment): in-turn inference freezes
         # sim time while wall time runs, so the wall clamp must scale with
@@ -1409,6 +1424,7 @@ def rollout(
     record_simulator_work: bool = False,
     sim_engine: str | None = None,
     build_grace_s: int | None = None,
+    episode_timeout_s_override: int | None = None,
 ) -> dict:
     """HAR-1: the full run. Returns the report dict (CON-8: caller emits).
 
@@ -1565,7 +1581,10 @@ def rollout(
     # budget rather than waiting for the oracle (VER-5, increment 1b)
     try:
         episode_timeout_s, per_episode_budget_s = resolve_budgets(
-            tier, verifier, per_episode_wall_override_s=per_episode_wall_s
+            tier,
+            verifier,
+            per_episode_wall_override_s=per_episode_wall_s,
+            episode_timeout_override_s=episode_timeout_s_override,
         )
     except ValueError as exc:
         # refuse the unbudgeted tier/verifier combination the same way the
@@ -2015,6 +2034,9 @@ def rollout(
         "sim_timing": summarize_timing(read_timing_rows(run_dir)),
         # the first-episode build grace this run clamped against (HAR-1)
         "build_grace_s": build_grace_s,
+        # HAR-1: the SIM seconds each episode got, which the tier sets unless
+        # the operator shortened it; a timeout means nothing without it
+        "episode_timeout_s": episode_timeout_s,
         "seeds": seeds,
         "reset": reset_mode,
         "verifier": verifier,

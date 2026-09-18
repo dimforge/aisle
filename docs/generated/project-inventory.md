@@ -187,7 +187,7 @@ stayed outside it).
 | `harness probe` | `--dataflow`, `--topic`, `--for`, `--root` |
 | `harness report close` | `--id`, `--observed`, `--verdict`, `--root` |
 | `harness report log` | `--idea`, `--parent`, `--expect`, `--root` |
-| `harness rollout` | `--graph`, `--tier`, `--embodiment`, `--episodes`, `--seeds`, `--reset`, `--verifier`, `--sim-extra`, `--sim-engine`, `--build-grace-s`, `--root`, `--no-idea-gate`, `--perception`, `--run-id`, `--per-episode-wall-s`, `--env-baseline`, `--timeout-s` |
+| `harness rollout` | `--graph`, `--tier`, `--embodiment`, `--episodes`, `--seeds`, `--reset`, `--verifier`, `--sim-extra`, `--sim-engine`, `--episode-timeout-s`, `--build-grace-s`, `--root`, `--no-idea-gate`, `--perception`, `--run-id`, `--per-episode-wall-s`, `--env-baseline`, `--timeout-s` |
 | `harness semantic corpus` | `--seed`, `--per-condition`, `--output` |
 | `harness semantic run` | `--corpus`, `--analysis-seed`, `--output` |
 | `harness skill register` | `<skill_dir>`, `--root`, `--sandbox`, `--sim-engine`, `--run-id` |

@@ -849,20 +849,20 @@ class RapierScene:
                 self.render.set_body_pose(
                     env, entity.mirror.handles[env], _xyz(body.translation), _wxyz(body.rotation)
                 )
-        viewer = self.render.engine.viewer
         for robot in self.robots:
             for env, art in enumerate(robot.arts):
-                root = art.world.rigid_bodies.get(art.link_bodies[0])
-                self.render.set_body_pose(
-                    env,
-                    robot.mirror.link_bodies[env][0],
-                    _xyz(root.translation),
-                    _wxyz(root.rotation),
-                )
-                qpos = art.multibody().generalized_position()
-                self.render.state.set_robot_qpos(
-                    viewer, robot.mirror.robots[env], [float(v) for v in qpos]
-                )
+                # every link's world pose, written straight into the mirror's
+                # body buffer. Pushing the joint coordinates instead would run
+                # the mirror's own forward kinematics from ITS root, which the
+                # mirror never learns about, so a re-based robot (the mobile
+                # store embodiment) rendered frozen at the origin while its
+                # boxes moved.
+                mirrored = robot.mirror.link_bodies[env]
+                for index, body_handle in enumerate(art.link_bodies):
+                    body = art.world.rigid_bodies.get(body_handle)
+                    self.render.set_body_pose(
+                        env, mirrored[index], _xyz(body.translation), _wxyz(body.rotation)
+                    )
         self.render.invalidate_poses()
         self.render._synced = False
 
