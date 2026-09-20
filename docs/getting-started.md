@@ -179,19 +179,25 @@ How far the Nexus path is actually exercised, as of today:
   determinism is. See [determinism](determinism.md) before reading anything
   reproducible into a Nexus run.
 
-Nexus is not part of the lock. Build its Python module from sibling
-checkouts: nexus on its `aisle-backend` branch, whose manifest patches the
-rapier crates to a rapier checkout carrying the URDF roll-pitch-yaw fix
-(`fix-urdf-rpy-master`, that fix cherry-picked onto rapier master) and kiss3d to a kiss3d checkout on `fix-shared-window-managers`
-(offscreen sensor surfaces). Then install the wheel into the project
-environment:
+Nexus is not part of the lock, so its Python module is built from source.
+`engine-runtime.json` pins that source the way `dora-runtime.json` pins the
+Dora CLI: repository, branch and full commit. Nothing else has to be checked
+out first.
 
 ```bash
-uv run --extra sim --locked python tools/nexus_runtime.py install --nexus ../nexus --rapier ../rapier --kiss3d ../kiss3d
+uv run --no-sync python tools/nexus_runtime.py install
 ```
 
-The installer builds with `maturin` (`--features metal` on macOS), installs
-the wheel with `uv pip`, and writes a receipt with the source commits. Then:
+That fetches the pinned nexus commit into `.engine-sources/` (gitignored),
+builds with `maturin` (`--features metal` on macOS), installs the wheel with
+`uv pip`, and writes a receipt naming the commit it built. The rapier and
+kiss3d crates the engine links against are NOT fetched here: nexus's own
+Cargo manifest patches them from git by revision, so cargo resolves and
+caches them, and `engine-runtime.json` does not pin them a second time.
+
+Working across local checkouts instead? Pass `--nexus ../nexus`. Any path
+argument switches the whole build to local sources, so you never get a
+half-pinned, half-local mix. Then:
 
 ```bash
 uv run --extra sim --locked pytest -m sim tests/sim/test_nexus_scene.py
@@ -220,12 +226,14 @@ through the Nexus viewer, so a rapier run and a Nexus run differ only in the
 solver. Select it with `harness rollout --sim-engine rapier`.
 
 It needs BOTH wheels: the Nexus one above for the renderer, and the rapier
-Python bindings, which are also outside the lock. Build them from the same
-rapier checkout:
+Python bindings, which are also outside the lock and pinned in
+`engine-runtime.json`:
 
 ```bash
-uv run --no-sync python tools/rapier_runtime.py install --rapier ../rapier
+uv run --no-sync python tools/rapier_runtime.py install
 ```
+
+`--rapier ../rapier` builds from a local checkout instead.
 
 `--no-sync` matters here: a syncing `uv run` would reinstall the locked
 environment first and take the Nexus wheel back out, which is the renderer

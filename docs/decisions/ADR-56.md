@@ -63,7 +63,17 @@ achievable and where the physics tick is far cheaper.
   solver iteration count. The camera and light blocks are copied from
   `nexus_physics.toml` verbatim, because the renderer is the same one.
 - Two out-of-lock wheels now have to be installed by hand, and any `uv sync`
-  removes both. `tools/rapier_runtime.py verify` reports the renderer's receipt
+  removes both.
+- The engine sources are pinned, not tracked. `engine-runtime.json` names the
+  repository, branch and full commit of the two repositories AISLE builds
+  wheels from, and `tools/engine_sources.py` fetches them by exact commit, the
+  same discipline `dora-runtime.json` applies to the Dora CLI. The crates the
+  engine merely links against are pinned once, in nexus's own Cargo manifest,
+  by revision rather than branch: pinning them here as well would be two
+  sources of truth for one dependency, and a branch would make the build
+  irreproducible. The cost is that a new engine commit has to be pushed and
+  the pin bumped before a pinned install can use it; an unpushed pin fails
+  closed rather than building something else. `tools/rapier_runtime.py verify` reports the renderer's receipt
   alongside the solver's so a half-installed environment is visible.
 - A multibody is built with a 6-DoF free root that rapier collapses only during
   the first `step()`, so the backend takes one warm-up step before reading the

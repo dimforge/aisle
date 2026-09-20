@@ -19,18 +19,23 @@ That sync also removes the optional engine wheels, silently: neither
 lock ([getting started](getting-started.md) §3b and §3c), so any `uv sync`
 drops them and `--sim-engine nexus` then refuses at the `sim_engine` gate
 with `simulation engine 'nexus' is not installed in this environment`.
-Reinstall them from the sibling checkouts:
+Reinstall them from the commits `engine-runtime.json` pins:
 
 ```bash
-uv run --extra sim --locked python tools/nexus_runtime.py install --nexus ../nexus --rapier ../rapier --kiss3d ../kiss3d
+uv run --no-sync python tools/nexus_runtime.py install
 ```
 
 ```bash
-uv run --no-sync python tools/rapier_runtime.py install --rapier ../rapier
+uv run --no-sync python tools/rapier_runtime.py install
 ```
 
-Keep the `--extra sim` (and `--locked`) on that command: a plain `uv run`
-re-syncs the default extras first and takes the simulator back out.
+Keep `--no-sync` on those: a syncing `uv run` reinstalls the locked
+environment first and takes the other engine wheel back out.
+
+A pinned install that fails with `upload-pack: not our ref` means the pinned
+commit is not on the remote, usually because a local engine commit has not
+been pushed yet. The fetch refuses rather than silently building something
+else; push the branch, or pass a local checkout path to build from it.
 
 ## Leaked simulator processes (the first thing to check)
 

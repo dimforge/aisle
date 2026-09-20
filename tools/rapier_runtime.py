@@ -58,6 +58,20 @@ def read_receipt(root: Path | None = None) -> dict:
     return {"installed": True, "path": str(path), "receipt": receipt, "problem": None}
 
 
+def resolve_rapier(rapier: Path | None) -> Path:
+    """The local checkout when given, otherwise the pinned GitHub source
+    (ADR-56). The bindings live in the same repository the Nexus build
+    patches, so both installers resolve to the same pinned commit."""
+    if rapier is not None:
+        return rapier
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from engine_sources import materialize
+
+    report = materialize()
+    print(f"using the pinned engine sources in {report['sources_dir']}", file=sys.stderr)
+    return Path(report["sources"]["rapier"]["path"])
+
+
 def _maturin_env() -> dict:
     """maturin refuses to run with both VIRTUAL_ENV and CONDA_PREFIX set
     (rapier's own python/dev.sh unsets them for the same reason)."""
@@ -145,7 +159,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     inst = sub.add_parser("install", help="build the wheel and install it into the project venv")
-    inst.add_argument("--rapier", type=Path, default=ROOT.parent / "rapier")
+    inst.add_argument(
+        "--rapier",
+        type=Path,
+        default=None,
+        help="rapier checkout to build (default: the commit engine-runtime.json pins, "
+        "fetched from GitHub)",
+    )
     inst.add_argument("--python", type=Path, default=Path(sys.executable))
     inst.add_argument(
         "--determinism",
@@ -164,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if read["installed"] else 1
     try:
         if args.command == "install":
-            receipt = install(args.rapier, args.python, args.determinism)
+            receipt = install(resolve_rapier(args.rapier), args.python, args.determinism)
         else:
             receipt = verify(args.python)
     except (RuntimeError, FileNotFoundError, ValueError) as exc:

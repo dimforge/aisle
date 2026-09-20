@@ -22,3 +22,6 @@ out/
 .nexus-runtime-receipt.json
 # ADR-56: receipt of the locally built rapier wheel (tools/rapier_runtime.py)
 .rapier-runtime-receipt.json
+
+# ADR-55/ADR-56: pinned engine checkouts fetched by tools/engine_sources.py
+.engine-sources/

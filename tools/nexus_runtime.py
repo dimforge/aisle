@@ -61,6 +61,28 @@ def read_receipt(root: Path | None = None) -> dict:
     return {"installed": True, "path": str(path), "receipt": receipt, "problem": None}
 
 
+def resolve_sources(
+    nexus: Path | None, rapier: Path | None, kiss3d: Path | None
+) -> tuple[Path, Path | None, Path | None]:
+    """Local checkouts when given, otherwise the pinned GitHub source.
+
+    Passing any path keeps the whole set local, so a developer working across
+    sibling checkouts never gets a surprise mix of local and pinned sources
+    (ADR-55). With none given, only nexus is fetched: its manifest patches the
+    rapier and kiss3d crates from git by rev, and cargo resolves those."""
+    if nexus is not None or rapier is not None or kiss3d is not None:
+        return (nexus or ROOT.parent / "nexus", rapier, kiss3d)
+    # pinned build: nexus's manifest patches rapier and kiss3d from git by
+    # rev, so cargo fetches them and no local copy of either is needed
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from engine_sources import materialize
+
+    report = materialize()
+    paths = report["sources"]
+    print(f"using the pinned engine sources in {report['sources_dir']}", file=sys.stderr)
+    return (Path(paths["nexus"]["path"]), None, None)
+
+
 def _run(command: list[str], cwd: Path) -> str:
     proc = subprocess.run(command, cwd=cwd, capture_output=True, text=True)
     if proc.returncode != 0:
@@ -170,7 +192,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     inst = sub.add_parser("install", help="build the wheel and install it into the project venv")
-    inst.add_argument("--nexus", type=Path, default=ROOT.parent / "nexus")
+    inst.add_argument(
+        "--nexus",
+        type=Path,
+        default=None,
+        help="nexus checkout to build (default: the commit engine-runtime.json pins, "
+        "fetched from GitHub)",
+    )
     inst.add_argument(
         "--rapier", type=Path, default=None, help="rapier checkout the nexus manifest patches to"
     )
@@ -193,7 +221,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if read["installed"] else 1
     try:
         if args.command == "install":
-            receipt = install(args.nexus, args.rapier, args.kiss3d, args.python, args.feature)
+            nexus, rapier, kiss3d = resolve_sources(args.nexus, args.rapier, args.kiss3d)
+            receipt = install(nexus, rapier, kiss3d, args.python, args.feature)
         else:
             receipt = verify(args.python)
     except (RuntimeError, FileNotFoundError, ValueError) as exc:

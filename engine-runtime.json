@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "comment": "ADR-55/ADR-56 engine sources: the two repositories AISLE builds wheels from. kiss3d is absent on purpose, and so are the rapier crates the engine links: nexus's own Cargo manifest patches those from git by rev, so cargo resolves them and this file does not pin them twice.",
+  "sources": {
+    "nexus": {
+      "repository": "https://github.com/dimforge/nexus.git",
+      "branch": "aisle-backend",
+      "commit": "ec162a81a8fb42841d2e50511ca064842214c8ba",
+      "builds": "the nexus3d wheel (the GPU engine and its viewer)"
+    },
+    "rapier": {
+      "repository": "https://github.com/dimforge/rapier.git",
+      "branch": "python-multibody-control",
+      "commit": "6a047ed3d174e0ddf192ce4a478546a3f5aea0fb",
+      "builds": "the rapier3d wheel (python/rapier-py-3d), the CPU engine's bindings"
+    }
+  }
+}
