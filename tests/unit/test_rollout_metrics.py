@@ -960,8 +960,9 @@ def test_progress_interval_env_override():
 def test_timing_summary_weights_windows_and_reports_rtf():
     """ADR-67: the manifest's `sim_timing` is the step- and frame-weighted
     aggregate of the bridge's sidecar rows, with the real-time factor as sim
-    seconds over wall seconds spent stepping and rendering; the progress
-    phrase renders it compactly and omits what the engine did not report."""
+    seconds over the wall seconds of the bridge's ticks. A tick already
+    contains the renders it triggered, so they must not be added again (PR
+    #594 review); the progress phrase omits what the engine did not report."""
     from aisle.harness.rollout import summarize_timing, timing_phrase
 
     rows = [
@@ -971,7 +972,7 @@ def test_timing_summary_weights_windows_and_reports_rtf():
             "step_ms_mean": 6.0,
             "step_ms_max": 9.0,
             "frames": 15,
-            "tick_ms_mean": 6.0,
+            "tick_ms_mean": 6.3,
             "render_ms_mean": 2.0,
             "gpu_ms_mean": 5.0,
             "sim_window_s": 1.0,
@@ -982,7 +983,7 @@ def test_timing_summary_weights_windows_and_reports_rtf():
             "step_ms_mean": 8.0,
             "step_ms_max": 12.0,
             "frames": 15,
-            "tick_ms_mean": 8.0,
+            "tick_ms_mean": 8.6,
             "render_ms_mean": 4.0,
             "gpu_ms_mean": None,
             "sim_window_s": 1.0,
@@ -993,17 +994,20 @@ def test_timing_summary_weights_windows_and_reports_rtf():
     assert summary["step_ms_mean"] == pytest.approx(7.0)
     assert summary["step_ms_max"] == 12.0
     assert summary["render_ms_mean"] == pytest.approx(3.0)
-    assert summary["tick_ms_mean"] == pytest.approx(7.0)
+    assert summary["tick_ms_mean"] == pytest.approx(7.45)
     assert summary["gpu_ms_mean"] == pytest.approx(5.0)  # only the window that reported it
-    # 2 sim seconds over 1.4 s of stepping + 0.09 s of rendering
-    assert summary["rtf"] == pytest.approx(2.0 / (1.4 + 0.09), rel=1e-6)
+    # 2 sim seconds over 1.49 s of ticks, whose renders are already inside
+    assert summary["rtf"] == pytest.approx(2.0 / 1.49, rel=1e-6)
+    # an older row with no tick: its renders are outside the step, so they count
+    legacy = [{k: v for k, v in rows[0].items() if k != "tick_ms_mean"}]
+    assert summarize_timing(legacy)["rtf"] == pytest.approx(1.0 / (0.6 + 0.03), rel=1e-6)
     assert (
         timing_phrase(summary)
-        == "physics 7.0 ms/step, tick 7.0 ms, gpu 5.0 ms, render 3.0 ms/frame, rtf 1.34x"
+        == "physics 7.0 ms/step, tick 7.5 ms, gpu 5.0 ms, render 3.0 ms/frame, rtf 1.34x"
     )
     genesis = summarize_timing(
         [{**rows[1], "engine": "genesis", "frames": 0, "render_ms_mean": None}]
     )
     assert genesis["gpu_ms_mean"] is None and genesis["render_ms_mean"] is None
-    assert timing_phrase(genesis) == "physics 8.0 ms/step, tick 8.0 ms, rtf 1.25x"
+    assert timing_phrase(genesis) == "physics 8.0 ms/step, tick 8.6 ms, rtf 1.16x"
     assert summarize_timing([]) == {} and timing_phrase({}) == ""

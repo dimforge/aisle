@@ -70,7 +70,7 @@
     "matched_source:src/aisle/harness/provider_runner.py": "sha256:2c39d11d67cc4da2f9a2c732e86ba4e9a4b8da88570bdb1ecd1364d4668831cb",
     "matched_source:src/aisle/harness/provider_source_audit.py": "sha256:e3be1f9d70288b4f596427a39ab4274399e9fdc74e87043e3c1249596fe1872b",
     "matched_source:src/aisle/harness/registry.py": "sha256:214da7bb8db26c80c79262fa79c40a624d8a9981463d38a9c4aa30bc989bc1fb",
-    "matched_source:src/aisle/harness/rollout.py": "sha256:142af0657dd1cc7d65d9a2a010d78e3041db9181235fbcffdbc44c918db333f8",
+    "matched_source:src/aisle/harness/rollout.py": "sha256:568f98bb6593f8f007408185956e7a97e7d575359c6c9f8b683bca37ca90c5f2",
     "matched_source:src/aisle/harness/rollout_client.py": "sha256:18808db0aa2df356d1a7cc9a538585aa9dcc653abd120e761649f1dff2c27c31",
     "matched_source:src/aisle/harness/simulator_work.py": "sha256:2ade87416ab8c5d8902e9734af850b7613ee9ee42f9ca672c9482625e15d3d91",
     "matched_source:src/aisle/harness/traces.py": "sha256:c2e6a717a56ce47e296bdc0115b15de9361b72084638b4f3bc66f7e7d032546b",
@@ -160,7 +160,7 @@
     "spec": "sha256:f5096c587cd9687859f2dc80ec807d1bbf959cb4e05c152154e71e47bdc1f593",
     "treatment_integrity": "sha256:b37162c6f295c5686da9b3089eb3bd96b69f68f01f41da0a784c4017658b10a6",
     "treatment_postflight": "sha256:27b591c291491ff1e943a62ec29ecd054b6caa29547b7872844cdc67dc403e9c",
-    "treatment_table": "sha256:c065c48d1279c8e0676d5082ace9ca161c550a82206e201dc1db41a79a791983"
+    "treatment_table": "sha256:1b4b37f216ae222a673b7fc83741ec666a994c1e42320f821479455453aef3a0"
   },
   "campaign_id": "cse-causal-study-pilot-v13",
   "commands": [
@@ -565,7 +565,7 @@
   "declaration_sha256": "sha256:3369f7ad437d1fa7f7015a1516685a839def97898e464c6feebf2c131fe42bf0",
   "frozen": false,
   "gate_record_hashes": {},
-  "git_head": "48b1c7032bdde5a29634bb2b6b9a41ce37620560",
+  "git_head": "6173684e8129dff85bcb3411a1f011bee4b96aab",
   "issue": 347,
   "pending_gates": [
     "BND-12 task-band freeze (#346)",

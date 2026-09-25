@@ -264,8 +264,9 @@ def summarize_timing(rows: list[dict]) -> dict:
     window of steps) into run-level means, weighted by step and frame counts:
     physics wall time per step, engine GPU time per step where the engine
     reports it, render wall time per frame, and the real-time factor (sim
-    seconds per wall second spent stepping and rendering). Empty when there
-    is nothing to aggregate."""
+    seconds per wall second of bridge ticks). A row's tick already spans the
+    step, the renders and the publishes, so render time is added only for
+    older rows that carry no tick. Empty when there is nothing to aggregate."""
     steps = sum(int(r.get("steps", 0)) for r in rows)
     frames = sum(int(r.get("frames", 0)) for r in rows)
     if steps <= 0:
@@ -280,7 +281,16 @@ def summarize_timing(rows: list[dict]) -> dict:
     gpu_wall = sum(float(r["gpu_ms_mean"]) * int(r.get("steps", 0)) for r in gpu_rows)
     render_wall = sum(float(r.get("render_ms_mean") or 0.0) * int(r.get("frames", 0)) for r in rows)
     sim_s = sum(float(r.get("sim_window_s") or 0.0) for r in rows)
-    wall_s = (tick_wall + render_wall) / 1000.0
+    wall_s = (
+        sum(
+            float(r["tick_ms_mean"]) * int(r.get("steps", 0))
+            if r.get("tick_ms_mean") is not None
+            else float(r.get("step_ms_mean") or 0.0) * int(r.get("steps", 0))
+            + float(r.get("render_ms_mean") or 0.0) * int(r.get("frames", 0))
+            for r in rows
+        )
+        / 1000.0
+    )
     out = {
         "engine": rows[-1].get("engine"),
         "steps": steps,
