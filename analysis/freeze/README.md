@@ -54,9 +54,7 @@ flt-bank-calibration-v4 supersedes v3 after injector v2 (FLT-8 parity pad and pr
 bnd v4, sfe v4 and flt v5 supersede their predecessors after the SPEC 480 live-graph
 manifests (semantic-gateway, goal-adversary) entered the registry;
 flt-bank-calibration-v6 supersedes v5 with the artifacts of the v2 round that actually ran;
-bnd v6 supersedes v5 after the semantic-gateway manifest gained its sensor-arm inputs;
-bnd v11 supersedes v10 after the perception CLI gained the ADR-67 `--sim-engine`
-selection on every sim-launching subcommand.
+bnd v6 supersedes v5 after the semantic-gateway manifest gained its sensor-arm inputs.
 
 BND v5 supersedes v4 after the Dora 1.0.1 lockfile upgrade. Its unchanged
 salted seed commitment is inherited from the byte-bound v4 manifest because
