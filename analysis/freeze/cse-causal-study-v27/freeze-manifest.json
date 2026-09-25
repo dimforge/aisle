@@ -33,7 +33,7 @@
     "matched_source:src/aisle/harness/_code_mode_protocol/protocol.proto": "sha256:406d8f47d8d0b95a9d4ae104890e5e52764c9597e9271f75ff434a4ce24748d0",
     "matched_source:src/aisle/harness/candidate_launch.py": "sha256:654eb90264703e3ce3ab599bb8e143047eaee288c8852c5b09c74e3147039270",
     "matched_source:src/aisle/harness/candidates.py": "sha256:d1b441a30288a6c0500aaa765a24d4aeecca4f8d52e96f633befc50c84ecf5f5",
-    "matched_source:src/aisle/harness/cli.py": "sha256:8ebffb3d6ccbbd86e951b3d81f6f595e26267faa84a547e5dcf09960726174df",
+    "matched_source:src/aisle/harness/cli.py": "sha256:a5488dc0350278b2618be9e25043bfcef5ae69610d2de750dffd01c9afa98b44",
     "matched_source:src/aisle/harness/code_mode_audit.py": "sha256:24638163f205408da1c6cf20a1b77c80a0d740a3f8ed44696eb90baf7de61f6a",
     "matched_source:src/aisle/harness/code_mode_authority.py": "sha256:217ea025f10a4dc02b4b0ff2ff733adf4a695d1098b3c8ce0d2b27b8a140853d",
     "matched_source:src/aisle/harness/code_mode_proxy.py": "sha256:333eee561d610489d2f48f9359ad94a3d9d8ff729fbae0fd3dec4acf64be2cb2",
@@ -536,7 +536,7 @@
   "declaration_sha256": "sha256:133acc8fb0533a0487cff997b85b172ee9ca113f59b09e1d40d1121069fc3054",
   "frozen": false,
   "gate_record_hashes": {},
-  "git_head": "7f6878da35faf1a718a313bc451de20f713c5f2b",
+  "git_head": "94565954c43d800c1167294bf68f26a82f5f465f",
   "issue": 347,
   "pending_gates": [
     "BND-12 task-band freeze (#346)",

@@ -898,20 +898,30 @@ def main() -> int:
         import time as time_module
 
         from aisle.harness.fleet import run_fleet
-        from aisle.harness.rollout import parse_seed_range, scrub_bringup_env, sim_device_for
+        from aisle.harness.rollout import (
+            engine_check,
+            parse_seed_range,
+            resolve_sim_identity,
+            scrub_bringup_env,
+        )
         from aisle.harness.validate import validate as validate_graph
-        from aisle.sim import normalize_engine, select_sim_backend
 
+        graph_path = args.graph if args.graph.is_absolute() else args.root / args.graph
         out_dir = args.out or (args.root / "runs" / f"fleet-{int(time_module.time())}")
-        # ADR-67: the engine is the RUNNER's choice, not the shell's. The
-        # scrub below strips both variables, so they are re-applied here from
-        # the validated flag and the platform's backend table.
-        try:
-            sim_engine = normalize_engine(args.sim_engine)
-            sim_backend = select_sim_backend(sim_engine, "sim", platform.system())
-        except ValueError as refused:
-            print(json.dumps({"ok": False, "error": str(refused)}))
+        # ADR-67: the engine is the RUNNER's choice, not the shell's, and it
+        # rides the graph as it does for rollout: a bridge's own
+        # AISLE_SIM_ENGINE would win over this process's env, so a conflict
+        # with the flag is refused, as is an engine that is not installed.
+        # The scrub below strips both variables; they are re-applied from here.
+        engine_gate = engine_check(args.root, graph_path, args.sim_engine)
+        identity = (
+            resolve_sim_identity("sim", engine_gate["engine"]) if engine_gate["ok"] else engine_gate
+        )
+        if not identity["ok"]:
+            print(json.dumps({"ok": False, "refused": identity}))
             return 1
+        sim_engine = engine_gate["engine"]
+        sim_backend = identity["sim_backend"]
 
         procs = []
 
@@ -933,7 +943,7 @@ def main() -> int:
             return proc.poll
 
         report = run_fleet(
-            args.graph if args.graph.is_absolute() else args.root / args.graph,
+            graph_path,
             args.agents,
             args.episodes,
             parse_seed_range(args.seeds),
@@ -943,7 +953,7 @@ def main() -> int:
             root=args.root,
             sim_engine=sim_engine,
             sim_backend=sim_backend,
-            sim_device=sim_device_for(sim_engine, sim_backend),
+            sim_device=identity["sim_device"],
         )
         # validate the STAMPED graph and attach the verdict (VAL gates)
         stamped = validate_graph(Path(report["graph"]), args.root, "franka", False)

@@ -343,6 +343,44 @@ def test_fault_calibration_rung_passes_the_engine_to_the_rollout_argv(tmp_path, 
     assert "--sim-engine" not in next(cmd for cmd in calls if "rollout" in cmd)
 
 
+@pytest.mark.parametrize(
+    "declared,requested,installed,expected",
+    [
+        ("nexus", "genesis", True, "graph declares engine nexus"),
+        (None, "rapier", False, "'rapier' is not installed"),
+    ],
+)
+def test_fleet_refuses_before_launch(
+    tmp_path, monkeypatch, capsys, declared, requested, installed, expected
+):
+    """ADR-67, CON-8: fleet runs the same engine gate as rollout. A bridge's
+    own AISLE_SIM_ENGINE beats the child env dora is given, so a conflicting
+    flag would run one engine and report another; a missing engine would die
+    inside the bridge. Both refuse before anything launches."""
+    import json
+    import subprocess
+    import sys
+
+    from aisle.harness import cli
+
+    env = {} if declared is None else {"AISLE_SIM_ENGINE": declared}
+    graph = _graph_with_bridge_env(tmp_path, env)
+    monkeypatch.setattr("aisle.sim.engine_available", lambda engine: installed)
+    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: pytest.fail("fleet launched"))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["harness", "fleet", "--graph", str(graph), "--agents", "2", "--episodes", "1"]
+        + ["--seeds", "0", "--root", str(REPO_ROOT), "--out", str(tmp_path / "out")]
+        + ["--sim-engine", requested],
+    )
+    assert cli.main() == 1
+    report = json.loads(capsys.readouterr().out)
+    assert report["ok"] is False and report["refused"]["gate"] == "sim_engine"
+    assert expected in report["refused"]["detail"]
+    assert not (tmp_path / "out").exists()
+
+
 def test_fleet_report_records_the_engine_it_ran(tmp_path):
     """CON-5, ADR-67: `harness fleet` sets the engine in the child env after
     the scrub, so its report is where the run says which physics it measured
