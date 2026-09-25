@@ -125,7 +125,9 @@ The refusal JSON says why; the common ones:
 - **`this nexus scene was superseded by a newer build_scene in this
   process`**: the Nexus engine holds one live renderable scene per
   process. A newer build takes the viewer's render nodes, and the older
-  handle's cameras raise from then on (its physics readbacks still work).
+  handle's cameras raise from then on (its physics readbacks still work,
+  and the viewer frees those cameras, so a process can build any number of
+  scenes).
   Build one scene per process, or read from the newest handle. The sim
   tests build a fresh scene per test for exactly this reason.
 - **`nexus already initialized with backend 'X'; build_scene requires

@@ -5,7 +5,7 @@
     "nexus": {
       "repository": "https://github.com/dimforge/nexus.git",
       "branch": "aisle-backend",
-      "commit": "830f2ed01be8ae932b1bf4434c97aaf507d6fc32",
+      "commit": "b1b3049992895593fe01afa35bba56d3d622afdc",
       "builds": "the nexus3d wheel (the GPU engine and its viewer)"
     },
     "rapier": {

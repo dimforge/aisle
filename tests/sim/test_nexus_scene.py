@@ -5,12 +5,10 @@ surface (SPEC 030), realized on Nexus.
 Marker `sim`: imports nexus3d (and genesis for the Franka asset), runs
 headless. Skipped when the nexus3d wheel is not installed.
 
-Scene budget: the shared Nexus viewer never releases a sensor camera, so
-every build leaks its two wire cameras and the process panics inside wgpu at
-roughly the 23rd one (measured: 11 builds in a bare loop, 12 under pytest).
-Tests that only read a built scene therefore share one module-scoped build,
-and each group that steps, teleports or renders gets exactly one build; the
-groups that render come last, since only the newest scene can render.
+Scene order: only the newest scene can render (a later build frees the
+previous scene's cameras), so tests that only read a built scene share one
+module-scoped build, each group that steps, teleports or renders gets exactly
+one build, and the groups that render come last.
 """
 
 import importlib.util
@@ -40,8 +38,7 @@ def handle():
 
 
 # Module-scoped: these tests only read the built scene (no step, no teleport,
-# no render), so one build serves them all and the process keeps its camera
-# budget for the tests that need a live scene.
+# no render), so one build serves them all.
 @pytest.fixture(scope="module")
 def pristine():
     from aisle.sim import build_scene
@@ -493,6 +490,48 @@ def test_store_wrist_cam_to_ee_matches_the_attached_camera(store_handle):
         "published store cam_to_ee disagrees with the attached camera "
         f"(maxdiff {np.abs(published - realized_cv).max():.3e})"
     )
+
+
+def test_lighting_dr_renders_the_per_channel_ambient_it_records():
+    """SCN-6 on Nexus: the lighting toggle draws one ambient value per channel
+    and `dr_applied` records the triple, so the camera must render the triple,
+    not its mean. Re-rendering with the mean shifts each channel toward it."""
+    from aisle.scenes.pharmacy import DRToggle, SceneCfg
+    from aisle.sim import build_scene
+
+    lit = build_scene(
+        "nexus",
+        seed=7,
+        embodiment="franka",
+        n_envs=1,
+        headless=True,
+        cfg=SceneCfg(lighting=DRToggle(enabled=True, seed=5)),
+    )
+    ambient = np.asarray(lit.dr_applied["ambient"], dtype=np.float64)
+    assert np.ptp(ambient) > 0.05 and lit.scene.ambient == [float(c) for c in ambient]
+    camera = lit.cams["overhead"]
+    drawn = camera.render()[0].reshape(-1, 3).mean(axis=0)
+    lit.scene.engine.viewer.set_sensor_camera_ambient_color(camera.cam_id, [ambient.mean()] * 3)
+    lit.scene.sync(force=True)
+    averaged = camera.render()[0].reshape(-1, 3).mean(axis=0)
+    brighter = ambient > ambient.mean()
+    assert np.all((drawn - averaged)[brighter] > 0) and np.all((drawn - averaged)[~brighter] < 0)
+
+
+def test_rebuilding_frees_the_superseded_scene_cameras():
+    """A superseded scene's cameras cannot render (one live scene per
+    process), so the next build frees them: each holds render targets and a
+    shadow atlas, and a wgpu panic after about ten builds was the result of
+    keeping them. The superseded camera still refuses with a Python error."""
+    from aisle.sim import build_scene
+
+    first = build_scene("nexus", seed=0, embodiment="franka", n_envs=1, headless=True)
+    for seed in range(1, 16):
+        latest = build_scene("nexus", seed=seed, embodiment="franka", n_envs=1, headless=True)
+        assert latest.scene.engine.viewer.num_sensor_cameras() == len(latest.cams)
+    assert latest.cams["overhead"].render()[0].shape == (480, 640, 3)
+    with pytest.raises(RuntimeError, match="superseded"):
+        first.cams["overhead"].render()
 
 
 # --- the live scene: the last build in the file, so nothing supersedes it ---

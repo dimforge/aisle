@@ -6,17 +6,10 @@ Nexus viewer.
 Marker `sim`: imports rapier3d and nexus3d (and genesis for the Franka
 asset), runs headless. Skipped when either wheel is missing.
 
-Scene budget: the renderer is the Nexus viewer, which never releases a sensor
-camera, and the process panics inside wgpu at roughly the 23rd one. This file
-builds nine scenes and adds one debug camera, so it costs 19 cameras. Tests
-that only read a built scene share one module-scoped build; each group that
-steps, teleports or renders gets exactly one; the groups that render come
-last, since only the newest scene can render.
-
-Nineteen plus `test_nexus_scene.py`'s own budget is well past the panic, and
-a wgpu panic takes the whole pytest process with it, so this file refuses to
-run in a process that already built Nexus scenes (see `_own_viewer_budget`).
-Run the two engine files in separate pytest processes.
+Scene order: the renderer is the Nexus viewer, where only the newest scene
+can render (a later build frees the previous scene's cameras). Tests that
+only read a built scene share one module-scoped build; each group that steps,
+teleports or renders gets exactly one; the groups that render come last.
 """
 
 import importlib.util
@@ -38,28 +31,8 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="module", autouse=True)
-def _own_viewer_budget():
-    """Skip, loudly, rather than exhaust the shared viewer's sensor cameras.
-
-    The viewer is process-wide and leaks a camera per scene, so another
-    module's builds spend this file's budget. Overrunning it panics inside
-    wgpu, which aborts pytest itself and loses every later result; a skip
-    naming the cause is the honest failure mode."""
-    from aisle.sim import nexus_backend
-
-    engine = nexus_backend._ENGINE
-    if engine is not None and engine.scene_count:
-        pytest.skip(
-            f"{engine.scene_count} Nexus scenes already built in this process; the shared "
-            "viewer's sensor cameras are spent. Run tests/sim/test_rapier_scene.py in its own "
-            "pytest process."
-        )
-
-
 # Module-scoped: these tests only read the built scene (no step, no teleport,
-# no render), so one build serves them all and the process keeps its camera
-# budget for the tests that need a live scene.
+# no render), so one build serves them all.
 @pytest.fixture(scope="module")
 def pristine():
     from aisle.sim import build_scene
@@ -254,6 +227,54 @@ def test_step_teleport_and_control(stepping):
     handle.scene.step()
     pos = to_numpy(box.get_pos()).reshape(-1)
     assert pos[2] < 0.3 and pos[2] > 0.29  # falling under gravity, one step later
+
+
+def test_a_teleported_arm_wakes_up(stepping):
+    """TC-6 on rapier: an arm rapier put to sleep after settling must move on
+    the step after a reset writes its joints or re-bases its root."""
+    handle = stepping
+    robot = handle.robot
+    art = robot.arts[0]
+    links = [art.world.rigid_bodies.get(h) for h in art.link_bodies]
+    for write in (
+        lambda: robot.set_qpos(to_numpy(robot.get_qpos()).reshape(-1) + 0.05),
+        lambda: robot.set_pos(to_numpy(robot.get_pos()).reshape(-1)),
+    ):
+        for body in links:
+            body.sleep()
+        assert all(body.is_sleeping for body in links)
+        write()
+        assert not any(body.is_sleeping for body in links)
+
+
+def test_a_malformed_gain_profile_is_refused(stepping):
+    """A gains list that is neither one value nor one per DoF is refused, not
+    silently broadcast from its first entry."""
+    robot = stepping.robot
+    robot.set_dofs_kp([100.0], dofs_idx_local=[0, 1, 2])
+    assert np.all(robot.kp[[0, 1, 2]] == 100.0)
+    with pytest.raises(ValueError, match="2 entries for 3 DoFs"):
+        robot.set_dofs_kp([1.0, 2.0], dofs_idx_local=[0, 1, 2])
+    with pytest.raises(ValueError, match="kv has 2 entries"):
+        robot.set_dofs_kv([1.0, 2.0], dofs_idx_local=[0, 1, 2])
+
+
+def test_lighting_dr_renders_the_per_channel_ambient_it_records():
+    """SCN-6 on rapier: the render mirror takes the recorded ambient triple,
+    not its mean (the Nexus test checks the pixels)."""
+    from aisle.scenes.pharmacy import DRToggle, SceneCfg
+    from aisle.sim import build_scene
+
+    lit = build_scene(
+        "rapier",
+        seed=7,
+        embodiment="franka",
+        n_envs=1,
+        headless=True,
+        cfg=SceneCfg(lighting=DRToggle(enabled=True, seed=5)),
+    )
+    ambient = [float(c) for c in lit.dr_applied["ambient"]]
+    assert len(set(ambient)) == 3 and lit.scene.render.ambient == ambient
 
 
 # --- what this engine exists for: a reproducible step -----------------------

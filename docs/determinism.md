@@ -34,8 +34,9 @@ Known platform caveats — recorded here rather than hidden (SCN-7):
   does the same in `_ensure_nexus` (`src/aisle/sim/nexus_backend.py`): one
   engine per process, and a later build asking for another backend is
   refused. That engine also holds one live renderable scene: a newer
-  `build_scene` supersedes the previous scene's render nodes, so the older
-  handle keeps its physics readbacks but its cameras raise.
+  `build_scene` supersedes the previous scene's render nodes and frees its
+  cameras, so the older handle keeps its physics readbacks and camera poses
+  but its cameras raise on render.
 - Nexus stepping determinism is not established (ADR-67). Only build
   determinism is covered, by `tests/sim/test_nexus_scene.py`; the GPU broad
   phase and constraint coloring use atomics, so run-to-run bitwise equality

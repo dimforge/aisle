@@ -124,6 +124,18 @@ def pos_lookat_up_to_transform(pos, lookat, up=(0.0, 0.0, 1.0)) -> np.ndarray:
     return transform
 
 
+def _per_dof(values, dofs: list, name: str) -> np.ndarray:
+    """Genesis gain-shape rule: one value for every addressed DoF, or one per
+    DoF. Any other length is a malformed gains profile, refused rather than
+    silently broadcasting its first entry."""
+    values = np.atleast_1d(np.asarray(values, dtype=np.float64))
+    if values.ndim != 1 or values.size not in (1, len(dofs)):
+        raise ValueError(
+            f"{name} has {values.size} entries for {len(dofs)} DoFs; give one or one per DoF"
+        )
+    return values
+
+
 def _broadcast_rows(values, n_envs: int, envs_idx) -> tuple[np.ndarray, list[int]]:
     """Genesis call-shape rule: `(k,)` or `(1, k)` broadcasts to every
     addressed env, `(n, k)` gives one row per addressed env."""
@@ -238,6 +250,17 @@ class NexusEngine:
         self.pipeline = nexus3d.NexusPipeline()
         self.pipeline.preload_pipelines(viewer)
         self.scene_count = 0
+        # the live scene's sensor cameras; each holds its own render targets
+        # and shadow atlas on the GPU until it is released
+        self.live_cameras: list[NexusCamera] = []
+
+    def release_cameras(self) -> None:
+        """Free the live scene's sensor cameras. Called when a new scene
+        supersedes it, whose cameras could no longer render anyway, so a
+        process can build any number of scenes without exhausting the GPU."""
+        for camera in self.live_cameras:
+            camera.release()
+        self.live_cameras = []
 
 
 def _ensure_nexus(backend_name: str | None = None, headless: bool = True) -> NexusEngine:
@@ -477,12 +500,12 @@ class NexusRobot:
     def set_dofs_kp(self, kp, dofs_idx_local=None, envs_idx=None) -> None:
         dofs = list(range(self.n_dofs)) if dofs_idx_local is None else list(dofs_idx_local)
         for robot in self.robots:
-            robot.set_pd_gains(dofs, kp=[float(v) for v in np.atleast_1d(kp)])
+            robot.set_pd_gains(dofs, kp=[float(v) for v in _per_dof(kp, dofs, "kp")])
 
     def set_dofs_kv(self, kv, dofs_idx_local=None, envs_idx=None) -> None:
         dofs = list(range(self.n_dofs)) if dofs_idx_local is None else list(dofs_idx_local)
         for robot in self.robots:
-            robot.set_pd_gains(dofs, kv=[float(v) for v in np.atleast_1d(kv)])
+            robot.set_pd_gains(dofs, kv=[float(v) for v in _per_dof(kv, dofs, "kv")])
 
     def control_dofs_position(self, target, dofs_idx_local=None, envs_idx=None) -> None:
         dofs = list(range(self.n_dofs)) if dofs_idx_local is None else list(dofs_idx_local)
@@ -589,16 +612,23 @@ class NexusCamera:
         self.fov = fov
         self._attached_link: NexusLink | None = None
         self._attached_offset: np.ndarray | None = None
+        self._released_pose: tuple | None = None
+
+    def release(self) -> None:
+        """Free the viewer camera, keeping its last pose readable."""
+        self._released_pose = self.scene.engine.viewer.sensor_camera_pose(self.cam_id)
+        self.scene.engine.viewer.remove_sensor_camera(self.cam_id)
 
     @property
     def transform(self) -> np.ndarray:
-        pos, quat = self.scene.engine.viewer.sensor_camera_pose(self.cam_id)
+        pos, quat = self._released_pose or self.scene.engine.viewer.sensor_camera_pose(self.cam_id)
         transform = np.eye(4, dtype=np.float64)
         transform[:3, :3] = quat_wxyz_to_matrix(quat)
         transform[:3, 3] = pos
         return transform
 
     def set_pose(self, transform=None, pos=None, lookat=None, up=(0.0, 0.0, 1.0)) -> None:
+        self.scene.activate()
         if transform is None:
             transform = pos_lookat_up_to_transform(pos, lookat, up)
         transform = np.asarray(transform, dtype=np.float64)
@@ -662,7 +692,7 @@ class NexusScene:
         substeps: int,
         gravity,
         n_envs: int,
-        ambient: float,
+        ambient,
         background_rgba,
         camera_planes: tuple[float, float],
     ):
@@ -672,7 +702,9 @@ class NexusScene:
         self.n_envs = int(n_envs)
         self.dt = float(dt)
         self.gravity = [float(g) for g in gravity]
-        self.ambient = float(ambient)
+        # per-channel, as Genesis's `ambient_light` takes it, so the lighting
+        # DR draw that `dr_applied` records is the one rendered
+        self.ambient = [float(c) for c in ambient]
         self.background_rgba = [float(c) for c in background_rgba]
         self.camera_planes = camera_planes
         self.state = nx.NexusState()
@@ -694,7 +726,9 @@ class NexusScene:
         self._synced = False
         engine.scene_count += 1
         # one render generation per scene: a later build supersedes this
-        # scene's rendering (its nodes leave the shared graph), physics stays
+        # scene's rendering (its nodes leave the shared graph and its cameras
+        # are freed), physics stays
+        engine.release_cameras()
         self.generation = engine.viewer.begin_scene()
 
     # -- construction ----------------------------------------------------
@@ -819,9 +853,11 @@ class NexusScene:
         cam_id = self.engine.viewer.add_sensor_camera(
             int(res[0]), int(res[1]), float(fov), znear, zfar
         )
-        self.engine.viewer.set_sensor_camera_ambient(cam_id, self.ambient)
+        self.engine.viewer.set_sensor_camera_ambient(cam_id, 1.0)
+        self.engine.viewer.set_sensor_camera_ambient_color(cam_id, self.ambient)
         self.engine.viewer.set_sensor_camera_background(cam_id, self.background_rgba)
         camera = NexusCamera(self, cam_id, res, fov)
+        self.engine.live_cameras.append(camera)
         if pos is not None and lookat is not None:
             camera.set_pose(pos=pos, lookat=lookat)
         self.cameras.append(camera)
@@ -977,7 +1013,7 @@ def _new_scene(engine: NexusEngine, physics: dict, n_envs: int, ambient) -> Nexu
         substeps=nexus_physics["sim"]["substeps"],
         gravity=physics["sim"]["gravity"],
         n_envs=n_envs,
-        ambient=float(np.mean(ambient)),
+        ambient=ambient,
         background_rgba=nexus_physics["camera"]["background_rgba"],
         camera_planes=(nexus_physics["camera"]["znear"], nexus_physics["camera"]["zfar"]),
     )

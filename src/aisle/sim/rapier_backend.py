@@ -58,6 +58,7 @@ from aisle.sim.nexus_backend import (
     NexusScene,
     _broadcast_rows,
     _ensure_nexus,
+    _per_dof,
     _squeeze_envs,
     franka_mjcf_path,
     quat_wxyz_to_matrix,
@@ -377,6 +378,14 @@ class RapierRobot:
         multibody.apply_displacements([float(q) - c for q, c in zip(qpos, current, strict=True)])
         multibody.forward_kinematics(art.world.rigid_bodies, False)
         multibody.update_rigid_bodies(art.world.rigid_bodies, False)
+        self._wake(env)
+
+    def _wake(self, env: int) -> None:
+        """A teleported arm must integrate on the next step: one rapier put to
+        sleep after settling would otherwise stay at rest (TC-6 reset)."""
+        bodies = self.arts[env].world.rigid_bodies
+        for handle in self.arts[env].link_bodies:
+            bodies.get(handle).wake_up()
 
     def set_qpos(self, qpos, envs_idx=None) -> None:
         """Genesis's `set_qpos`, with the Nexus backend's rest semantics: the
@@ -422,6 +431,7 @@ class RapierRobot:
         multibody = art.multibody()
         multibody.forward_kinematics(art.world.rigid_bodies, True)
         multibody.update_rigid_bodies(art.world.rigid_bodies, False)
+        self._wake(env)
         self.scene.render_dirty()
 
     def set_pos(self, pos, envs_idx=None) -> None:
@@ -440,15 +450,13 @@ class RapierRobot:
 
     def set_dofs_kp(self, kp, dofs_idx_local=None, envs_idx=None) -> None:
         dofs = list(range(self.n_dofs)) if dofs_idx_local is None else list(dofs_idx_local)
-        values = np.atleast_1d(np.asarray(kp, dtype=np.float64))
-        self.kp[dofs] = values if values.size == len(dofs) else values[0]
+        self.kp[dofs] = _per_dof(kp, dofs, "kp")
         if self._motorized:
             self._push_motors(dofs)
 
     def set_dofs_kv(self, kv, dofs_idx_local=None, envs_idx=None) -> None:
         dofs = list(range(self.n_dofs)) if dofs_idx_local is None else list(dofs_idx_local)
-        values = np.atleast_1d(np.asarray(kv, dtype=np.float64))
-        self.kv[dofs] = values if values.size == len(dofs) else values[0]
+        self.kv[dofs] = _per_dof(kv, dofs, "kv")
         if self._motorized:
             self._push_motors(dofs)
 
@@ -619,7 +627,7 @@ class RapierScene:
             substeps=1,
             gravity=self.gravity,
             n_envs=self.n_envs,
-            ambient=float(np.mean(ambient)),
+            ambient=ambient,
             background_rgba=camera["background_rgba"],
             camera_planes=(camera["znear"], camera["zfar"]),
         )
