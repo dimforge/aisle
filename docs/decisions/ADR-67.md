@@ -3,6 +3,20 @@
 Status: PROPOSED — owner review required under CON-14; the spec-change PR it
 owes (see below) must land before it can be accepted.
 
+## Scope: development-only engines
+
+Nexus, and rapier after it (ADR-68), are development engines. Their wheels
+are built from dimforge branches pinned by commit in `engine-runtime.json`,
+outside `pyproject.toml` and `uv.lock`, so no run on them can pass
+`--env-baseline origin/main`: every such run is `--env-baseline local`,
+recorded as unattested, with the engine build receipt as its only
+provenance. No result from either engine enters the measured record until
+all three of these hold: the engines are installed from released versions
+inside the lock, a `spec-change` PR generalizes the Genesis wording of
+SPEC 020 and SPEC 030 (CON-14), and the frozen baseline is re-established
+under human review (CON-7). Whether that path is worth taking is a
+maintainer decision this ADR does not make.
+
 ## Context
 
 SPEC 020 names Genesis World as the simulator and SPEC 030 calls the bridge

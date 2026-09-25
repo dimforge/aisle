@@ -3,6 +3,9 @@
 Status: PROPOSED — owner review required under CON-14, with ADR-67.
 Trigger: ADR-67 left stepping determinism unestablished on the only
 alternative engine.
+Scope: a development-only engine, under the conditions ADR-67's scope
+section sets for Nexus (pinned out-of-lock wheel, `--env-baseline local`
+runs only, no measured-record results).
 
 ## Context
 
