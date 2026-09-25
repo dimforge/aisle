@@ -43,14 +43,17 @@ def replay(
     contact_frequency: float | None,
     pgs: int | None,
 ) -> dict:
-    import aisle.sim.nexus_backend as nb
-    from aisle.scenes.pharmacy import load_physics, to_numpy
-
     traces = run_dir / "traces"
     joints = _load(traces / "budget-guard__joint_cmd_safe.arrow")
     grips = _load(traces / "budget-guard__gripper_cmd_safe.arrow")
     jt = np.asarray(joints["sim_time_ns"], dtype=np.int64)
     gt = np.asarray(grips["sim_time_ns"], dtype=np.int64)
+    if jt.size == 0 or gt.size == 0:
+        raise ValueError(f"{traces} holds no joint or gripper commands to replay")
+
+    import aisle.sim.nexus_backend as nb
+    from aisle.scenes.pharmacy import load_physics, to_numpy
+
     profile = load_physics()["embodiment"][embodiment]
     open_m, close_m = float(profile["gripper_open_m"]), float(profile["gripper_close_m"])
 
@@ -119,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
             args.contact_frequency,
             args.pgs,
         )
-    except (FileNotFoundError, KeyError, ImportError) as exc:
+    except (FileNotFoundError, KeyError, ImportError, ValueError) as exc:
         print(json.dumps({"ok": False, "error": str(exc)}))
         print(str(exc), file=sys.stderr)
         return 1
