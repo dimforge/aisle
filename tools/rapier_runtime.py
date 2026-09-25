@@ -25,7 +25,7 @@ from nexus_runtime import ROOT, _commit, _run
 
 RECEIPT = ROOT / ".rapier-runtime-receipt.json"
 WHEEL_GLOB = "rapier3d-*.whl"
-MANIFEST = "python/rapier-py-3d/Cargo.toml"
+MANIFEST = "bindings/python/rapier-py-3d/Cargo.toml"
 
 
 def receipt_path(root: Path | None = None) -> Path:
@@ -74,7 +74,7 @@ def resolve_rapier(rapier: Path | None) -> Path:
 
 def _maturin_env() -> dict:
     """maturin refuses to run with both VIRTUAL_ENV and CONDA_PREFIX set
-    (rapier's own python/dev.sh unsets them for the same reason)."""
+    (rapier's own bindings/python/dev.sh unsets them for the same reason)."""
     env = dict(os.environ)
     env.pop("CONDA_PREFIX", None)
     return env

@@ -560,7 +560,15 @@ class RapierRobot:
         if init_qpos is not None:
             init = np.asarray(init_qpos, dtype=np.float64).reshape(-1, self.n_dofs)[0]
             self._write_qpos(0, init)
-        dofs = None if dofs_idx_local is None else [int(d) for d in dofs_idx_local]
+        joint_can_move = None
+        if dofs_idx_local is not None:
+            allowed = {int(d) for d in dofs_idx_local}
+
+            def joint_can_move(link) -> bool:
+                # rapier frees whole joints, so a link moves only when all its DoFs may
+                start = link.assembly_id
+                return all(i in allowed for i in range(start, start + link.ndofs))
+
         ik_cfg = self.scene.cfg["ik"]
         option = rp.InverseKinematicsOption(
             max_iters=int(max_solver_iters),
@@ -574,7 +582,7 @@ class RapierRobot:
             art.link_joint_handle(link_index),
             _isometry(target_pos, quat),
             option,
-            dofs,
+            joint_can_move=joint_can_move,
         )
         multibody = art.multibody()
         multibody.apply_displacements([float(v) for v in displacement])
@@ -661,7 +669,7 @@ class RapierScene:
         params.static_contact_softness = rp.SpringCoefficients(
             float(sim["static_contact_natural_frequency"]), float(sim["contact_damping_ratio"])
         )
-        world.physics_pipeline.enable_counters(True)
+        world.physics_pipeline.counters.enable()
         return world
 
     @property
@@ -879,8 +887,6 @@ class RapierScene:
         No `gpu_ms`: rapier's step is a synchronous CPU call, so the bridge's
         wall-clock step time already is the engine time, and claiming a GPU
         number here would put a render cost in a physics column."""
-        # `physics_pipeline.counters` hands back a fresh snapshot on every
-        # access, so it has to be read here rather than cached at build
         counters = self.worlds[0].physics_pipeline.counters
         if not counters.enabled:
             return {}

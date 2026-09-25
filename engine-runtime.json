@@ -11,8 +11,8 @@
     "rapier": {
       "repository": "https://github.com/dimforge/rapier.git",
       "branch": "python-multibody-control",
-      "commit": "6a047ed3d174e0ddf192ce4a478546a3f5aea0fb",
-      "builds": "the rapier3d wheel (python/rapier-py-3d), the CPU engine's bindings"
+      "commit": "2144f3e5c7f27f26d18ba8bef2bf8590ecf1aca8",
+      "builds": "the rapier3d wheel (bindings/python/rapier-py-3d), the CPU engine's bindings"
     }
   }
 }

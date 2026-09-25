@@ -259,6 +259,31 @@ def test_a_malformed_gain_profile_is_refused(stepping):
         robot.set_dofs_kv([1.0, 2.0], dofs_idx_local=[0, 1, 2])
 
 
+def test_inverse_kinematics_moves_only_the_listed_dofs(stepping):
+    """Genesis `dofs_idx_local` on rapier: an IK solve over the first arm
+    joints moves them toward the target and leaves every other DoF alone."""
+    robot = stepping.robot
+    hand = robot.get_link("hand")
+    start = to_numpy(robot.get_qpos()).reshape(-1).copy()
+    target = to_numpy(hand.get_pos()).reshape(-1) + np.array([0.03, 0.0, -0.03])
+    quat = to_numpy(hand.get_quat()).reshape(-1)
+    qpos = to_numpy(
+        robot.inverse_kinematics(link=hand, pos=target, quat=quat, dofs_idx_local=[0, 1, 2, 3])
+    ).reshape(-1)
+    assert not np.allclose(qpos[:4], start[:4], atol=1e-4)
+    assert np.allclose(qpos[4:], start[4:], atol=1e-6)
+    assert np.allclose(to_numpy(robot.get_qpos()).reshape(-1), start, atol=1e-6)
+
+
+def test_perf_stats_reads_the_step_counters(stepping):
+    """The bridge's timing sidecar gets rapier's own step time, and no GPU
+    number, since the step is a synchronous CPU call."""
+    stepping.scene.step()
+    stats = stepping.scene.perf_stats()
+    assert stats["cpu_ms"] > 0.0 and stats["solver_ms"] > 0.0
+    assert "gpu_ms" not in stats
+
+
 def test_lighting_dr_renders_the_per_channel_ambient_it_records():
     """SCN-6 on rapier: the render mirror takes the recorded ambient triple,
     not its mean (the Nexus test checks the pixels)."""
