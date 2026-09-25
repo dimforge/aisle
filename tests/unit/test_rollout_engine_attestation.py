@@ -16,6 +16,8 @@ import pytest
 
 from aisle.harness import rollout as rollout_module
 
+pytestmark = pytest.mark.unit
+
 ENGINE_FACTS = {
     "engine": "nexus",
     "sim_engine_hash": "b" * 64,
@@ -28,7 +30,9 @@ ENGINE_FACTS = {
 def captured_hash_cmd(monkeypatch):
     """Answer the trusted env_hash checker with a canned report, keeping the
     argv it was called with. Every other subprocess call is refused so the
-    test cannot silently exercise something else."""
+    test cannot silently exercise something else. The engine wheels are
+    outside the lock, so the unit tier has none installed (ADR-67)."""
+    monkeypatch.setattr("aisle.sim.engine_available", lambda engine: True)
     seen: dict = {}
     real_run = subprocess.run
 
