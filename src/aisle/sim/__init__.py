@@ -1,4 +1,4 @@
-"""Physics-engine selection for the bridge and the harness (ADR-55).
+"""Physics-engine selection for the bridge and the harness (ADR-67).
 
 The scene contract (SPEC 020) and the bridge contract (SPEC 030) are engine
 neutral at the object level: the bridge talks to `robot`, entity, link and
@@ -10,7 +10,7 @@ backend for each, and dispatches scene construction:
 - ``nexus``: `aisle.sim.nexus_backend`, which rebuilds the same scenes from
   the frozen pure functions (layout, placements, textures) on the Nexus
   GPU engine behind the same object surface.
-- ``rapier``: `aisle.sim.rapier_backend` (ADR-56), the same scenes stepped by
+- ``rapier``: `aisle.sim.rapier_backend` (ADR-68), the same scenes stepped by
   rapier on the CPU. It borrows the Nexus viewer as its renderer, so it needs
   both wheels, and gains a deterministic single-threaded step in exchange.
 
@@ -31,7 +31,7 @@ ENGINE_ENV_VAR = "AISLE_SIM_ENGINE"
 
 # Backend names each engine accepts through AISLE_SIM_BACKEND (BRG-6).
 # rapier steps on the CPU and takes no other backend; its renderer is the
-# Nexus viewer, whose adapter choice is not the physics backend (ADR-56).
+# Nexus viewer, whose adapter choice is not the physics backend (ADR-68).
 ENGINE_BACKENDS: dict[str, tuple[str, ...]] = {
     "genesis": ("cpu", "metal", "cuda"),
     "nexus": ("webgpu", "metal", "cuda", "cpu"),
@@ -81,7 +81,7 @@ def select_nexus_backend(sim_extra: str, platform_name: str, cuda_available: boo
 
 
 def select_rapier_backend(sim_extra: str, platform_name: str, cuda_available: bool = False) -> str:
-    """rapier steps on the CPU on every platform (ADR-56), so the portable
+    """rapier steps on the CPU on every platform (ADR-68), so the portable
     extra resolves to ``cpu`` and the CUDA extra has nothing to select."""
     if sim_extra == "sim":
         return "cpu"
@@ -119,7 +119,7 @@ def engine_available(engine: str) -> bool:
     """Whether every Python package the engine needs is importable
     (collection-safe: uses find_spec, never imports the simulator). rapier
     needs its renderer too, so a missing nexus3d refuses it here rather than
-    at the first render (ADR-56)."""
+    at the first render (ADR-68)."""
     import importlib.util
 
     modules = ENGINE_MODULES[normalize_engine(engine)]
@@ -129,7 +129,7 @@ def engine_available(engine: str) -> bool:
 def engine_version(engine: str) -> str:
     """The installed simulator's version string, for `bridge_info`. The
     rapier engine reports its solver's version; its renderer is attested
-    separately through the run's engine build receipt (ADR-56)."""
+    separately through the run's engine build receipt (ADR-68)."""
     engine = normalize_engine(engine)
     if engine == "genesis":
         import genesis

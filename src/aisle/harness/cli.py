@@ -40,7 +40,7 @@ def _git_sha(root: Path) -> str:
 
 
 def _add_sim_engine_flag(parser: argparse.ArgumentParser) -> None:
-    """The one `--sim-engine` definition (ADR-55) every sim-launching
+    """The one `--sim-engine` definition (ADR-67) every sim-launching
     subcommand shares, so no entry point can drift to another engine set or
     silently force genesis. `None` asserts nothing: the graph's declaration
     wins, and an undeclared graph runs the default engine."""
@@ -50,7 +50,7 @@ def _add_sim_engine_flag(parser: argparse.ArgumentParser) -> None:
         "--sim-engine",
         default=None,
         choices=list(ENGINES),
-        help="physics engine realizing the scene (ADR-55, ADR-56); genesis is "
+        help="physics engine realizing the scene (ADR-67, ADR-68); genesis is "
         "the default; omit to honour the engine the graph's bridge declares",
     )
 
@@ -919,7 +919,7 @@ def main() -> int:
         from aisle.sim import normalize_engine, select_sim_backend
 
         out_dir = args.out or (args.root / "runs" / f"fleet-{int(time_module.time())}")
-        # ADR-55: the engine is the RUNNER's choice, not the shell's. The
+        # ADR-67: the engine is the RUNNER's choice, not the shell's. The
         # scrub below strips both variables, so they are re-applied here from
         # the validated flag and the platform's backend table.
         try:

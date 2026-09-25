@@ -31,7 +31,7 @@ BUNDLE_FILES = (
     "aisle/harness/registry.py",
     "aisle/harness/validate.py",
     "aisle/harness/cli.py",
-    # ADR-55: the CLI's `--sim-engine` choices and the validator's engine
+    # ADR-67: the CLI's `--sim-engine` choices and the validator's engine
     # check both read the engine registry, so the bundle carries it. It
     # imports no simulator (CON-12), so this adds no weight to the sandbox.
     "aisle/sim/__init__.py",

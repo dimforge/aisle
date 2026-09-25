@@ -1,4 +1,4 @@
-"""Unit tests for tools/nexus_runtime.py's build-provenance reader (ADR-55).
+"""Unit tests for tools/nexus_runtime.py's build-provenance reader (ADR-67).
 
 The Nexus wheel is built from sibling checkouts and installed outside the uv
 lock, so `uv.lock` says nothing about it and the receipt is gitignored: the
@@ -33,7 +33,7 @@ def write_receipt(root: Path, payload: dict) -> Path:
 
 
 def test_read_receipt_returns_the_engine_build_provenance(tmp_path):
-    """CON-5, ADR-55: a run manifest can carry the wheel, feature, platform
+    """CON-5, ADR-67: a run manifest can carry the wheel, feature, platform
     and the nexus/rapier/kiss3d commits behind the physics it measured."""
     payload = {
         "schema_version": 1,
@@ -56,7 +56,7 @@ def test_read_receipt_returns_the_engine_build_provenance(tmp_path):
 
 
 def test_read_receipt_reports_absence_and_corruption_as_facts(tmp_path):
-    """CON-8, ADR-55: an engine that was never built, or a receipt that no
+    """CON-8, ADR-67: an engine that was never built, or a receipt that no
     longer parses, is a reported problem the manifest can record — never an
     exception escaping into the rollout."""
     module = runtime_module()

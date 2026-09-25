@@ -254,7 +254,7 @@ class BridgeConfig:
     # CON-5: rollout resolves and attests this backend before launch. None is
     # the deterministic portable default for direct/debug graph execution.
     sim_backend: str | None = None
-    # ADR-55/ADR-56: which physics engine realizes the scene
+    # ADR-67/ADR-68: which physics engine realizes the scene
     # (AISLE_SIM_ENGINE): `genesis` (the frozen builders), `nexus` or
     # `rapier`. Graph-declared like the rung, injected by rollout, attested
     # in bridge_info and the manifest.
@@ -578,7 +578,7 @@ def make_bridge_info(
     a consumer from having to guess. sim_backend is required for the same
     recorded-vs-actual reason: CUDA and CPU traces must not look identical.
 
-    sim_engine (ADR-55) names the physics engine; genesis_version keeps its
+    sim_engine (ADR-67) names the physics engine; genesis_version keeps its
     BRG-6 name and carries the version of whichever engine ran. It is
     required for the same recorded-vs-actual reason as sim_backend: a
     defaulted "genesis" is a valid name, so the wrong engine would be
@@ -713,7 +713,7 @@ def timing_sidecar_path(env: dict) -> Path | None:
 class StepTimer:
     """Wall and engine timing of the bridge's physics steps and camera renders,
     flushed as one JSON row per window of steps to a sidecar file so a run's
-    performance can be compared across engines (ADR-55) without a new topic:
+    performance can be compared across engines (ADR-67) without a new topic:
     the topic contract (SPEC 010) and the frozen graphs stay untouched.
 
     A row carries the window's step count, mean/max wall time of the physics
@@ -821,7 +821,7 @@ class DebugVideo:
 def genesis_simulator_source() -> Path:
     """Genesis's own simulator module, for the physics journal's source
     binding. Imported here rather than at the top of the bridge so a run on
-    another engine never needs Genesis installed (ADR-55)."""
+    another engine never needs Genesis installed (ADR-67)."""
     import genesis
 
     return Path(genesis.__file__).parent / "engine/simulator.py"
@@ -868,7 +868,7 @@ DEBUG_CAMERA_FOV = 55
 def add_debug_camera(scene, sim_engine: str, eye, lookat):
     """A rasterizer-only camera added to a built scene. The Nexus backend
     accepts cameras at any time, and so does the rapier backend, which renders
-    through the same viewer (ADR-56). Genesis fixes the scene's cameras at
+    through the same viewer (ADR-68). Genesis fixes the scene's cameras at
     build (`Scene.add_camera` asserts unbuilt), but its visualizer still
     registers a `debug=True` camera afterwards: it renders through the
     rasterizer only, outside the batch renderer and raytracer, exactly what an
@@ -944,7 +944,7 @@ def main(
     ):
 
         def observed_build(builder, **kwargs):
-            # ADR-55: the physics journal observes Genesis's own Simulator
+            # ADR-67: the physics journal observes Genesis's own Simulator
             # class, so it applies to that engine alone; the others report
             # their step cost through the timing sidecar instead.
             if "AISLE_SIM_WORK_PATH" in os.environ and cfg.sim_engine == "genesis":

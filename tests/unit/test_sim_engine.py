@@ -1,4 +1,4 @@
-"""Engine selection for the bridge and the harness (ADR-55, ADR-56).
+"""Engine selection for the bridge and the harness (ADR-67, ADR-68).
 
 Unit-marked: nothing here imports a simulator. The Nexus and rapier backend
 modules are imported to prove they stay sim-free at import time (CON-12),
@@ -27,7 +27,7 @@ pytestmark = pytest.mark.unit
 
 
 def test_default_engine_is_genesis():
-    """ADR-55: the frozen Genesis path stays the default; the engine is an
+    """ADR-67: the frozen Genesis path stays the default; the engine is an
     explicit, graph-declared choice."""
     assert DEFAULT_ENGINE == "genesis"
     assert select_engine({}) == "genesis"
@@ -37,7 +37,7 @@ def test_default_engine_is_genesis():
 
 
 def test_unknown_engine_is_refused_not_defaulted():
-    """ADR-55 (same rule as TC-9's rung): a typo must not silently attest
+    """ADR-67 (same rule as TC-9's rung): a typo must not silently attest
     another engine."""
     with pytest.raises(ValueError, match="unknown simulation engine"):
         normalize_engine("bullet")
@@ -56,7 +56,7 @@ def test_unknown_engine_is_refused_not_defaulted():
     ],
 )
 def test_select_nexus_backend(sim_extra, platform_name, cuda_available, expected):
-    """ADR-55: the portable extra never changes physics because a GPU is
+    """ADR-67: the portable extra never changes physics because a GPU is
     visible; CUDA is the explicit Linux opt-in."""
     assert select_nexus_backend(sim_extra, platform_name, cuda_available) == expected
 
@@ -75,7 +75,7 @@ def test_select_nexus_backend_fails_closed(sim_extra, platform_name, cuda_availa
 
 
 def test_select_rapier_backend_is_cpu_only():
-    """ADR-56: rapier steps on the CPU on every platform, so the portable
+    """ADR-68: rapier steps on the CPU on every platform, so the portable
     extra resolves to `cpu` and the CUDA extra selects nothing rather than
     silently handing back a backend rapier cannot run."""
     assert select_rapier_backend("sim", "Darwin") == "cpu"
@@ -88,14 +88,14 @@ def test_select_rapier_backend_is_cpu_only():
 
 
 def test_rapier_engine_declares_its_renderer():
-    """ADR-56: the rapier engine renders through the Nexus viewer, so both
+    """ADR-68: the rapier engine renders through the Nexus viewer, so both
     wheels are part of the engine. A missing nexus3d must be refused at
     selection time, not at the first render."""
     assert ENGINE_MODULES["rapier"] == ("rapier3d", "nexus3d")
 
 
 def test_select_sim_backend_dispatches_per_engine():
-    """ADR-55, ADR-56: the Genesis table is the frozen module's own,
+    """ADR-67, ADR-68: the Genesis table is the frozen module's own,
     unchanged, and each engine resolves through its own selector."""
     assert select_sim_backend("genesis", "sim", "Darwin") == "metal"
     assert select_sim_backend("genesis", "sim", "Linux") == "cpu"
@@ -135,7 +135,7 @@ def test_nexus_physics_constants_are_declared():
     assert physics["robot"]["default_kp"] == 100.0  # Genesis's URDF default
     assert physics["robot"]["default_kv"] == 10.0
     assert len(physics["ground"]["size"]) == 3
-    # the pinch-grasp solver settings (ADR-55): friction solved with the
+    # the pinch-grasp solver settings (ADR-67): friction solved with the
     # normals, Genesis's max() friction rule
     assert physics["sim"]["friction_in_bias_pass"] is True
     assert physics["sim"]["friction_combine_rule"] == "max"
@@ -150,7 +150,7 @@ def test_nexus_physics_constants_are_declared():
 
 
 def test_rapier_physics_constants_are_declared():
-    """SCN-2 spirit (ADR-56): the rapier realization constants live in their
+    """SCN-2 spirit (ADR-68): the rapier realization constants live in their
     own toml beside the Nexus one, outside the frozen scene directory
     (CON-7), and the blocks that describe the shared renderer are copies of
     it rather than a second opinion."""

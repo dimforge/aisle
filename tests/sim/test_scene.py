@@ -198,7 +198,7 @@ def test_physics_stability_at_substeps_one():
 
 
 def test_debug_camera_attaches_after_build(handle):
-    """ADR-55 operator tooling: AISLE_DEBUG_VIEW's camera joins a built
+    """ADR-67 operator tooling: AISLE_DEBUG_VIEW's camera joins a built
     Genesis scene through the visualizer's debug path (the frozen builder
     fixes the wire cameras at build, SCN-5), renders at the debug resolution
     and leaves the overhead camera untouched."""

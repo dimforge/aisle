@@ -1,82 +1,60 @@
-# ADR-56 — A CPU engine: rapier physics behind the Nexus renderer
+# ADR-56 — Use a replicated block-randomized session trial for H4
 
-Status: accepted (CON-15). Trigger: ADR-55 left stepping determinism
-unestablished on the only alternative engine.
-
-## Context
-
-ADR-55 put a second physics engine behind the scene contract: Nexus, a GPU
-rigid-body solver selected with `AISLE_SIM_ENGINE=nexus`. Genesis remains the
-default and the only engine behind the measured record.
-
-Two engines gave AISLE a cross-check on physics but not on reproducibility.
-Genesis reduces on Metal or CUDA, and Nexus colours constraints with GPU
-atomics, so neither can promise a bitwise-identical step, which is what CON-5
-asks for. Nexus is rapier on the GPU: scenes are authored as rapier worlds and
-baked into GPU buffers. That makes rapier on the CPU the natural third engine,
-with the same contact model, the same MJCF and URDF loaders and the same joint
-semantics, executing single-threaded where bitwise reproducibility is
-achievable and where the physics tick is far cheaper.
+Status: PROPOSED — owner review required under CON-14. Date: 2026-08-31.
+Issue: #347.
 
 ## Decision
 
-1. **A third engine name, attested like the others.** `AISLE_SIM_ENGINE=rapier`
-   joins `genesis` and `nexus` in `aisle.sim.ENGINES`; it is declared on the
-   bridge node, asserted by `harness rollout --sim-engine`, and recorded in the
-   run manifest with its own `sim_engine_hash` and build receipt.
-2. **rapier owns the physics, Nexus owns the pixels.** The backend steps
-   `rapier3d.PhysicsWorld` on the CPU and writes the resulting poses into a
-   Nexus scene that is built but never stepped, then renders through the same
-   sensor cameras. Measured before the backend was written: writing a body pose
-   and a robot configuration with no solver step moves the RGB, the metric
-   depth and the segmentation exactly as a stepped scene does.
+AISLE's primary causal study will randomize fresh coding-agent sessions between
+the equal-capability typed-dataflow and monolithic surfaces. The session is the
+experimental unit. The primary estimand is the session-success risk difference:
+whether one deadline-selected deliverable launches and passes a hidden paired
+held-out task acceptance function within fixed resource and authority budgets.
 
-   The alternatives were rejected. rapier's own Panda3D testbed is windowed
-   only, with no offscreen buffer, no depth, no segmentation and no camera
-   intrinsics. A new offscreen renderer would mean calibrating a third sensor
-   model that VER-8 would then have to re-derive.
+The design crosses at least two independently supplied coding-agent systems
+with both selected non-oracle task roles. Allocation is balanced in concealed
+temporal blocks within agent × task strata, with at least ten assignments per
+arm per stratum and a larger sample whenever the frozen power analysis requires
+it. Every stratum is reported before a pre-registered pooled estimate. Episodes,
+seeds, retries, edits, and tool calls remain nested observations.
 
-   The consequence is explicit: the rapier engine needs both wheels, and
-   `engine_available("rapier")` checks `rapier3d` and `nexus3d`. In exchange, a
-   rapier run and a Nexus run share the identical renderer, shadows,
-   antialiasing, segmentation ids and camera model, so a comparison between
-   them isolates the solver as the only variable.
-3. **The realization lives outside the frozen set**, next to the Nexus one, and
-   rebuilds the same scenes from the frozen pure functions (layout, placements,
-   occlusion, label textures, wrist mount, reachability). Nothing under CON-7
-   moves. `src/aisle/sim/**` is covered by the ADR-55 engine digest, so the
-   solver settings in `rapier_physics.toml` are attested even though the frozen
-   set does not contain them.
-4. **Missing rapier Python bindings are added upstream**, on a branch in the
-   rapier checkout, never worked around downstream. The engine needed multibody
-   state writing (`apply_displacements`, `generalized_position`, the link motor
-   setters, armature), the MJCF name tables, an IK degree-of-freedom filter and
-   a counters toggle.
+All #344 parity, #345 statistics/review, #346 task-band/freeze, and #353 sealed-
+treatment gates must pass at recorded hashes. Sessions are built independently;
+no later session can see same-experiment deliverables or findings. Every
+assignment and exclusion remains in the flow record, treatment-surface failures
+remain outcomes, and external infrastructure exclusions receive pre-registered
+bounding sensitivities rather than silent replacement.
 
-## Consequences
+The protocol, analyzer, randomization, hypotheses, endpoints, margins, sample
+size, stopping/exclusion rules, tasks, agents, prompts, budgets, authority, and
+evidence schemas are content-addressed, independently reviewed, and externally
+timestamped before scoring. Behavior-changing revisions start a new campaign or
+a documented separate deviation. Null, negative, imprecise, and monolithic-
+favoring results are complete outcomes, not reasons to redesign the claim.
 
-- Genesis stays the only engine behind the measured record. Three engines now
-  produce evidence that is not comparable across engines.
-- `rapier_physics.toml` holds the engine-realization constants. rapier has no
-  counterpart to the Nexus scheduling knobs (`friction_in_bias_pass`,
-  `implicit_coriolis`, `substep_refresh`), and its substep analogue is the
-  solver iteration count. The camera and light blocks are copied from
-  `nexus_physics.toml` verbatim, because the renderer is the same one.
-- Two out-of-lock wheels now have to be installed by hand, and any `uv sync`
-  removes both.
-- The engine sources are pinned, not tracked. `engine-runtime.json` names the
-  repository, branch and full commit of the two repositories AISLE builds
-  wheels from, and `tools/engine_sources.py` fetches them by exact commit, the
-  same discipline `dora-runtime.json` applies to the Dora CLI. The crates the
-  engine merely links against are pinned once, in nexus's own Cargo manifest:
-  rapier by its published release, kiss3d by git revision rather than branch
-  until its fix is released: pinning them here as well would be two
-  sources of truth for one dependency, and a branch would make the build
-  irreproducible. The cost is that a new engine commit has to be pushed and
-  the pin bumped before a pinned install can use it; an unpushed pin fails
-  closed rather than building something else. `tools/rapier_runtime.py verify` reports the renderer's receipt
-  alongside the solver's so a half-installed environment is visible.
-- A multibody is built with a 6-DoF free root that rapier collapses only during
-  the first `step()`, so the backend takes one warm-up step before reading the
-  degree-of-freedom layout. `Multibody::update_root_type` is `pub(crate)`
-  upstream; making it callable would remove the warm-up step.
+## Interpretation decisions
+
+- The treatment is the bundled engineering interface; this trial does not
+  isolate types, registry hints, validator diagnostics, or runtime separately.
+- Cost results are not called `at equal quality` unless pre-registered
+  equivalence passes for acceptance probability and accepted-artifact quality.
+- Artifact legibility is optional and secondary. If retained, raters are
+  blinded to agent, outcomes, order, and hypothesis; unavoidable interface
+  recognizability is measured and reported.
+- Simulation tasks establish no physical-robot effect.
+
+## Alternatives rejected
+
+- Historical or expert-only controls: they do not randomize autonomous sessions.
+- Episode-level sample sizes: episodes are nested within agent sessions.
+- Best-of-many deliverables: it changes the primary success opportunity.
+- Sequentially complete one arm: temporal/model-service drift confounds it.
+- Drop infrastructure failures without sensitivity bounds: exclusions can be
+  treatment-associated and directionally bias the result.
+
+## Gate
+
+SPEC 500 is implemented tests-first only after this spec-change and all named
+prerequisites merge. Human approval creates no causal evidence. Confirmatory
+collection remains locked until the complete freeze manifest and independent
+review exist, and #347 remains open until raw sessions regenerate every result.

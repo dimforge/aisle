@@ -172,7 +172,7 @@ def run_fleet(
     wait for every agent's results, aggregate. `launch` returns a poll()
     callable; injection keeps this pure enough to unit-test.
 
-    sim_engine/sim_backend/sim_device are recorded in the report (ADR-55,
+    sim_engine/sim_backend/sim_device are recorded in the report (ADR-67,
     CON-5): the caller owns the child env, so the report is where a fleet run
     says which physics it measured."""
     import yaml

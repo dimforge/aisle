@@ -120,7 +120,7 @@ The refusal JSON says why; the common ones:
   / cargo build during a run) contend for the GPU/CPU and corrupt
   timing.
 
-## Nexus engine refusals (ADR-55, optional engine)
+## Nexus engine refusals (ADR-67, optional engine)
 
 - **`this nexus scene was superseded by a newer build_scene in this
   process`**: the Nexus engine holds one live renderable scene per

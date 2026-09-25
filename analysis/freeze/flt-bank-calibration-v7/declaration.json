@@ -186,5 +186,5 @@
     "seeds_source": "~/aisle-private/freeze/flt-bank-calibration-v2/seeds.json"
   },
   "spec": "450",
-  "superseded": "flt-bank-calibration-v6 (the calibration artifact src/aisle/harness/fault_calibration.py gained the ADR-55 `--sim-engine` passthrough and the swap engine src/aisle/harness/swap.py fenced src/aisle/sim; thresholds, seed lineage, pending gates and every other artifact are preserved)"
+  "superseded": "flt-bank-calibration-v6 (the calibration artifact src/aisle/harness/fault_calibration.py gained the ADR-67 `--sim-engine` passthrough and the swap engine src/aisle/harness/swap.py fenced src/aisle/sim; thresholds, seed lineage, pending gates and every other artifact are preserved)"
 }

@@ -1,4 +1,4 @@
-"""rapier engine backend (ADR-56): the frozen scenes, stepped by rapier on the CPU.
+"""rapier engine backend (ADR-68): the frozen scenes, stepped by rapier on the CPU.
 
 `build_scene` / `build_store` here are the rapier counterparts of the frozen
 `aisle.scenes.pharmacy.build_scene` / `aisle.scenes.store.build_store`, and of
@@ -118,7 +118,7 @@ class RapierRenderMirror(NexusScene):
     physics: Any = None
 
     def step(self) -> None:
-        raise RuntimeError("the rapier backend never steps its render mirror (ADR-56)")
+        raise RuntimeError("the rapier backend never steps its render mirror (ADR-68)")
 
     def sync(self, force: bool = False) -> None:
         if self.physics is not None:
@@ -888,7 +888,7 @@ class RapierScene:
 
 def _resolve_backend(sim_backend: str | None) -> None:
     """rapier steps on the CPU and takes no other backend. The renderer's
-    adapter is chosen by the Nexus engine, not by this name (ADR-56)."""
+    adapter is chosen by the Nexus engine, not by this name (ADR-68)."""
     if sim_backend not in (None, "cpu"):
         raise ValueError(f"the rapier engine is CPU only; got backend {sim_backend!r}")
 
@@ -940,7 +940,7 @@ def build_scene(
 ) -> SceneHandle:
     """rapier twin of `aisle.scenes.pharmacy.build_scene` (SPEC 020): the same
     seeded layout, DR draws, colors, labels and cameras, stepped by rapier and
-    rendered through the Nexus viewer (ADR-56)."""
+    rendered through the Nexus viewer (ADR-68)."""
     cfg = cfg or SceneCfg()
     _resolve_backend(sim_backend)
     engine = _ensure_nexus(None, headless=headless)

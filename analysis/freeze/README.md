@@ -55,7 +55,7 @@ bnd v4, sfe v4 and flt v5 supersede their predecessors after the SPEC 480 live-g
 manifests (semantic-gateway, goal-adversary) entered the registry;
 flt-bank-calibration-v6 supersedes v5 with the artifacts of the v2 round that actually ran;
 bnd v6 supersedes v5 after the semantic-gateway manifest gained its sensor-arm inputs;
-bnd v11 supersedes v10 after the perception CLI gained the ADR-55 `--sim-engine`
+bnd v11 supersedes v10 after the perception CLI gained the ADR-67 `--sim-engine`
 selection on every sim-launching subcommand.
 
 BND v5 supersedes v4 after the Dora 1.0.1 lockfile upgrade. Its unchanged
@@ -235,7 +235,7 @@ commitments and all pending gates remain unchanged; these registrations do not
 authorize collection.
 
 BND v15, FLT v7, CSE v27 and pilot v13 supersede v14, v6, v26 and v12 after the
-ADR-55/ADR-56 engine seam moved three matched sources: the shared harness CLI,
+ADR-67/ADR-68 engine seam moved three matched sources: the shared harness CLI,
 the rollout runner and the simulator bridge now select the physics engine
 behind `AISLE_SIM_ENGINE`. Calibration rules, seed lineages, decision rules and
 every pending gate are preserved, and Genesis remains the default and the only

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and install AISLE's rapier Python module from a sibling checkout (ADR-56).
+"""Build and install AISLE's rapier Python module from a sibling checkout (ADR-68).
 
 The rapier engine is optional and outside the uv lock, like Nexus: this builds
 the `rapier3d` wheel with maturin from a rapier checkout, installs it into the
@@ -34,7 +34,7 @@ def receipt_path(root: Path | None = None) -> Path:
 
 
 def read_receipt(root: Path | None = None) -> dict:
-    """The ADR-56 engine build provenance, for a run manifest to carry.
+    """The ADR-68 engine build provenance, for a run manifest to carry.
 
     Same contract as `nexus_runtime.read_receipt`: never raises, and an
     absent or malformed receipt is a reported fact. Returns {"installed",
@@ -60,7 +60,7 @@ def read_receipt(root: Path | None = None) -> dict:
 
 def resolve_rapier(rapier: Path | None) -> Path:
     """The local checkout when given, otherwise the pinned GitHub source
-    (ADR-56). The bindings live in the same repository the Nexus build
+    (ADR-68). The bindings live in the same repository the Nexus build
     patches, so both installers resolve to the same pinned commit."""
     if rapier is not None:
         return rapier
@@ -149,7 +149,7 @@ def verify(python: Path) -> dict:
     renderer = nexus_runtime.read_receipt()
     if not renderer["installed"]:
         raise FileNotFoundError(
-            "the rapier engine renders through the Nexus viewer (ADR-56) and "
+            "the rapier engine renders through the Nexus viewer (ADR-68) and "
             f"nexus3d is not installed: {renderer['problem']}"
         )
     return {**receipt, "renderer": renderer["receipt"]}

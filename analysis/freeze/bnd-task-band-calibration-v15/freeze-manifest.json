@@ -12,7 +12,7 @@
     "lock": "sha256:9b8a82a17ba68c192f045405feed3ae7046af9568bddcb398292c20f0ed6f5a8",
     "perception_audit_report": "sha256:27134904b4b739423085a9b3c9b23678658d39f7a48e00cd2fbeaedea8c7a4d8",
     "perception_auditor": "sha256:9f8515abe6a8a51737ed42f8720dbc202156e2a26f13b7100c2f30713b999613",
-    "perception_cli": "sha256:17eb85222d01bbbf4b00131771a37952f186fb23a90136917e83f1057f8f6f23",
+    "perception_cli": "sha256:a962f0dd60c53804fc0ba853cfda34d8844a47e6064ec94776c2e77e9a23d29e",
     "perception_eligibility": "sha256:d18422c4bad1b2c7ebe1cd894cf213d6a7d5447856739456fdd6b8e7e25de7e2",
     "perception_eligibility_cli": "sha256:62c5b8facb273cf7ce50aa21f83aeff04efd7e338d0866adde4973e2f0970ccc",
     "perception_eligibility_module": "sha256:954d8af7b487fd653f80e51c58406d6bd8be086e47b100a88295afbe1db9cde4",
@@ -222,14 +222,14 @@
       "seeds_source": "~/aisle-private/freeze/bnd-task-band-calibration-v2/seeds.json"
     },
     "spec": "490",
-    "superseded": "bnd-task-band-calibration-v14 (the perception CLI artifact src/aisle/harness/cli.py gained the ADR-55/ADR-56 `--sim-engine` selection on every sim-launching subcommand; calibration rules, seed lineage, pending gates and every other artifact are preserved, and Genesis remains the default and the only engine behind this campaign)"
+    "superseded": "bnd-task-band-calibration-v14 (the perception CLI artifact src/aisle/harness/cli.py gained the ADR-67/ADR-68 `--sim-engine` selection on every sim-launching subcommand; calibration rules, seed lineage, pending gates and every other artifact are preserved, and Genesis remains the default and the only engine behind this campaign)"
   },
-  "declaration_sha256": "sha256:74e25060ce313dab8d608d1973c597775025035187715acda30461f624f34326",
+  "declaration_sha256": "sha256:cc588a3a47e35a320a877809969f2a57c84c4dc5c298341876d5073248f8d1dc",
   "frozen": false,
   "gate_record_hashes": {
     "CON-7 frozen set": "sha256:4e84ebe40d37cb26ef774e4fc6b46b54df7813ee051042308d1f409a9d9103ac"
   },
-  "git_head": "29ecabb7aa6414a7cbfdb8405f22d646f39730ec",
+  "git_head": "2b103ff1b5291f1ada997e5c265b62ac9c6661a3",
   "issue": 346,
   "pending_gates": [
     "BND-1 human-reviewed candidate amendment",

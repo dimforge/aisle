@@ -38,7 +38,7 @@ from aisle.harness.validate import validate
 # traces; post-data = a dead bridge freezes the stream)
 EPISODE_TIMEOUT_S = 60
 GENESIS_BUILD_BUDGET_S = 420
-# ADR-55: Nexus assembles the same scene in seconds (no kernel compilation),
+# ADR-67: Nexus assembles the same scene in seconds (no kernel compilation),
 # so a wedged first episode must clamp in a minute rather than seven. Sized
 # well above the measured build to cover wheel import and GPU adapter start.
 NEXUS_BUILD_BUDGET_S = 60
@@ -80,18 +80,18 @@ def tier_budgets(tier: str) -> tuple[int, int]:
 
 
 def build_budget_s(engine: str) -> int:
-    """The default scene-build wall grace for an engine (ADR-55, HAR-1).
+    """The default scene-build wall grace for an engine (ADR-67, HAR-1).
 
     Genesis compiles kernels for minutes, which is what the 420 s default was
     sized for; Nexus builds the same scene in seconds, and rapier builds the
-    same Nexus scene to render through (ADR-56). An explicit `--build-grace-s`
+    same Nexus scene to render through (ADR-68). An explicit `--build-grace-s`
     still wins over whatever this returns."""
     return NEXUS_BUILD_BUDGET_S if engine in ("nexus", "rapier") else GENESIS_BUILD_BUDGET_S
 
 
 def pre_data_stall_s(engine: str) -> int:
     """How long a launch may produce no traces at all before it counts as
-    stalled (ADR-55). Same reasoning as `build_budget_s`: the silent window is
+    stalled (ADR-67). Same reasoning as `build_budget_s`: the silent window is
     the scene build, so it is engine-sized rather than Genesis-sized."""
     return NEXUS_PRE_DATA_STALL_S if engine in ("nexus", "rapier") else PRE_DATA_STALL_S
 
@@ -360,7 +360,7 @@ def _last_record(raw: bytes) -> dict | None:
 
 
 def sim_device_for(engine: str, backend: str) -> str:
-    """The live device an (engine, backend) pair runs on (CON-5, ADR-55).
+    """The live device an (engine, backend) pair runs on (CON-5, ADR-67).
 
     Derived from the resolved pair rather than from the host OS: Genesis's
     Metal backend runs through torch MPS, while Nexus names its GPU adapter by
@@ -378,7 +378,7 @@ def resolve_sim_identity(sim_extra: str, sim_engine: str = "genesis") -> dict:
 
     CON-5 requires this live hardware fact to ride with the run identity;
     the portable ``sim`` selection deliberately never probes into CUDA.
-    sim_engine (ADR-55) picks whose backend table answers; an engine whose
+    sim_engine (ADR-67) picks whose backend table answers; an engine whose
     package is not installed refuses here, before anything launches.
     """
     from aisle.sim import engine_available, normalize_engine, select_sim_backend
@@ -665,7 +665,7 @@ def run_gates(
     # ADR-24: rollouts need the sim extra — declare the selection so the
     # trusted checker attests THIS environment shape (HAR-2)
     hash_cmd += ["--extras", sim_extra]
-    # ADR-55: the frozen set is engine neutral, so the engine digest and the
+    # ADR-67: the frozen set is engine neutral, so the engine digest and the
     # engine's own build provenance ride beside env_hash rather than in it
     hash_cmd += ["--sim-engine", sim_identity["sim_engine"]]
     if env_baseline != "local":
@@ -771,7 +771,7 @@ def run_gates(
         "env_attested": bool((dist or {}).get("attested")),
         "dist_problems": (dist or {}).get("problems") or [],
         "dist_inventory": (dist or {}).get("inventory"),
-        # ADR-55: {"engine", "sim_engine_hash", "n_files", "build"} — the
+        # ADR-67: {"engine", "sim_engine_hash", "n_files", "build"} — the
         # realization package plus the out-of-lock engine's build receipt,
         # which is the only trace of which engine sources produced the run
         "sim_engine_build": hash_report.get("sim"),
@@ -872,7 +872,7 @@ def realistic_verifier_node(root: Path, run_dir: Path, doc: dict, timeout_s: flo
 
 
 class EngineConflict(RuntimeError):
-    """The graph declares a physics engine the run asked to override (ADR-55).
+    """The graph declares a physics engine the run asked to override (ADR-67).
 
     Its own type so the refusal reports the `sim_engine` gate rather than the
     `perception` one the other instrumentation failure carries."""
@@ -962,7 +962,7 @@ def instrumented_graph(
             if node["id"] not in bridge_ids:
                 continue
             env = node.get("env") or {}
-            # ADR-55: the engine is DECLARED on the bridge, like the rung, so
+            # ADR-67: the engine is DECLARED on the bridge, like the rung, so
             # the graph hash attests which physics produced a result. A
             # declaration this runner would overwrite is refused (engine_check
             # catches it before launch; this is the same rule at the last
@@ -971,7 +971,7 @@ def instrumented_graph(
             if "AISLE_SIM_ENGINE" in env and declared != sim_engine:
                 raise EngineConflict(
                     f"{node['id']!r} declares AISLE_SIM_ENGINE={env['AISLE_SIM_ENGINE']!r}, "
-                    f"but the run requested engine {sim_engine!r} (ADR-55)"
+                    f"but the run requested engine {sim_engine!r} (ADR-67)"
                 )
             node["env"] = {**env, "AISLE_SIM_ENGINE": sim_engine}
     forbidden = FORBIDDEN_BY_RUNG.get(rung, ())
@@ -1127,7 +1127,7 @@ SCRUBBED_ENV = (
     # graph YAML, could never detect the divergence. Scrubbed with the variable
     # that introduced the same hazard rather than after the first bad run.
     "AISLE_PERCEPTION",
-    # ADR-55: which physics engine realizes the scene. The bridge reads it via
+    # ADR-67: which physics engine realizes the scene. The bridge reads it via
     # select_engine(os.environ), and `harness fleet` builds its child env from
     # this scrub, so an ambient AISLE_SIM_ENGINE=nexus in an operator's shell
     # silently swapped the physics of a fleet run while every hash attested
@@ -1345,7 +1345,7 @@ def engine_check(
     requested: str | None,
     graph_snapshot: bytes | None = None,
 ) -> dict:
-    """ADR-55: the physics engine rides the graph's sim bridge, exactly as the
+    """ADR-67: the physics engine rides the graph's sim bridge, exactly as the
     perception rung does (TC-9), so the graph hash attests which engine
     produced a result. `--sim-engine` therefore ASSERTS the declaration rather
     than replacing it: a conflict is refused before any gate, budget
@@ -1387,7 +1387,7 @@ def engine_check(
             "ok": False,
             "gate": "sim_engine",
             "detail": f"conflicting engines {sorted(declared)} declared across the sim "
-            f"bridges {sorted(bridge_ids)} (ADR-55): a graph with two engines attests neither",
+            f"bridges {sorted(bridge_ids)} (ADR-67): a graph with two engines attests neither",
         }
     if not declared:
         return fallback
@@ -1397,7 +1397,7 @@ def engine_check(
             "ok": False,
             "gate": "sim_engine",
             "detail": f"--sim-engine {requested} asserted, but the graph declares engine "
-            f"{engine} (ADR-55: the engine rides the graph, where the graph hash attests it)",
+            f"{engine} (ADR-67: the engine rides the graph, where the graph hash attests it)",
             "hint": f"run a graph whose sim bridge declares AISLE_SIM_ENGINE: {requested}",
         }
     return {"ok": True, "engine": engine, "declared": engine}
@@ -1428,7 +1428,7 @@ def rollout(
 ) -> dict:
     """HAR-1: the full run. Returns the report dict (CON-8: caller emits).
 
-    sim_engine ASSERTS the engine the graph's bridge declares (ADR-55); None
+    sim_engine ASSERTS the engine the graph's bridge declares (ADR-67); None
     means no assertion, so the declaration wins and an undeclared graph runs
     the default engine.
 
@@ -1639,7 +1639,7 @@ def rollout(
             "AISLE_RESET_MODE": reset_mode,
         }
     )
-    # CON-5 / ADR-55: applied AFTER the scrub, which now strips both from the
+    # CON-5 / ADR-67: applied AFTER the scrub, which now strips both from the
     # ambient environment. The gate resolved them from the explicitly selected
     # extra and the graph's declaration; a developer shell never may.
     env["AISLE_SIM_BACKEND"] = gates["sim_backend"]
@@ -2026,10 +2026,10 @@ def rollout(
         "sim_engine": gates["sim_engine"],
         "sim_backend": gates["sim_backend"],
         "sim_device": gates["sim_device"],
-        # ADR-55: env_hash cannot tell two engines (or two solver settings)
+        # ADR-67: env_hash cannot tell two engines (or two solver settings)
         # apart, so the engine digest and its build receipt ride here
         "sim_engine_build": gates.get("sim_engine_build"),
-        # ADR-55: the bridge's step/render/GPU timing, aggregated over the run,
+        # ADR-67: the bridge's step/render/GPU timing, aggregated over the run,
         # so engines are compared on the same graph and seeds
         "sim_timing": summarize_timing(read_timing_rows(run_dir)),
         # the first-episode build grace this run clamped against (HAR-1)

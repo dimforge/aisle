@@ -179,5 +179,5 @@
     "seeds_source": "~/aisle-private/freeze/bnd-task-band-calibration-v2/seeds.json"
   },
   "spec": "490",
-  "superseded": "bnd-task-band-calibration-v14 (the perception CLI artifact src/aisle/harness/cli.py gained the ADR-55/ADR-56 `--sim-engine` selection on every sim-launching subcommand; calibration rules, seed lineage, pending gates and every other artifact are preserved, and Genesis remains the default and the only engine behind this campaign)"
+  "superseded": "bnd-task-band-calibration-v14 (the perception CLI artifact src/aisle/harness/cli.py gained the ADR-67/ADR-68 `--sim-engine` selection on every sim-launching subcommand; calibration rules, seed lineage, pending gates and every other artifact are preserved, and Genesis remains the default and the only engine behind this campaign)"
 }

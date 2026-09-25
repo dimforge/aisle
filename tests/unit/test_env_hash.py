@@ -525,7 +525,7 @@ def test_committed_hash_matches_this_tree():
 
 
 def _sim_root(tmp_path: Path) -> Path:
-    """make_root plus the ADR-55 engine realization package."""
+    """make_root plus the ADR-67 engine realization package."""
     root = make_root(tmp_path)
     sim = root / "src" / "aisle" / "sim"
     sim.mkdir(parents=True)
@@ -536,7 +536,7 @@ def _sim_root(tmp_path: Path) -> Path:
 
 
 def test_adr55_sim_engine_hash_covers_the_realization_the_fence_does_not(tmp_path):
-    """CON-5, CON-7, ADR-55: the frozen set is engine neutral by decision
+    """CON-5, CON-7, ADR-67: the frozen set is engine neutral by decision
     (widening it would move every Genesis env_hash), so the engine
     realization gets its OWN digest. Two trees differing only in
     nexus_physics.toml's `substeps` share an env_hash — the exact hole the
@@ -559,7 +559,7 @@ def test_adr55_sim_engine_hash_covers_the_realization_the_fence_does_not(tmp_pat
 
 
 def test_adr55_sim_engine_hash_names_the_engine_and_its_build(tmp_path):
-    """CON-5, ADR-55: the digest binds the engine name and the engine build
+    """CON-5, ADR-67: the digest binds the engine name and the engine build
     provenance, so the same realization built from different Nexus sources
     is a different environment identity — and a run manifest can carry the
     receipt the gitignored file would otherwise keep local."""
@@ -583,7 +583,7 @@ def test_adr55_sim_engine_hash_names_the_engine_and_its_build(tmp_path):
 
 
 def test_adr55_attested_set_names_the_running_engines_distribution(tmp_path):
-    """ADR-24 as amended by ADR-55: the attested sim core listed
+    """ADR-24 as amended by ADR-67: the attested sim core listed
     genesis-world only, so a Nexus run's provenance check never looked at
     the wheel whose solver produced the trajectories. The engine-neutral
     core stays; the running engine's dist is added to it."""
@@ -600,7 +600,7 @@ def test_adr55_attested_set_names_the_running_engines_distribution(tmp_path):
 
 
 def test_adr55_cli_reports_the_engine_digest_without_moving_env_hash(tmp_path):
-    """CON-8, CON-7, ADR-55: --sim-engine adds a `sim` block to the JSON
+    """CON-8, CON-7, ADR-67: --sim-engine adds a `sim` block to the JSON
     report and leaves env_hash and the verdict untouched — the engine
     digest is recorded, never a gate."""
     root = _sim_root(tmp_path)

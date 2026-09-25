@@ -1,4 +1,4 @@
-"""The run records which engine build produced it (ADR-55, CON-5).
+"""The run records which engine build produced it (ADR-67, CON-5).
 
 `env_hash` is engine neutral by construction: the frozen set does not contain
 `src/aisle/sim`, so two runs on different engines, or on the same engine with
@@ -61,7 +61,7 @@ def _gates(root: Path, engine: str) -> dict:
 
 
 def test_gate_asks_the_checker_for_the_engine_digest(captured_hash_cmd):
-    """ADR-55: the engine name reaches the trusted checker, so the digest it
+    """ADR-67: the engine name reaches the trusted checker, so the digest it
     reports is the one for the engine this run will actually launch. Without
     it the checker would report the default engine's digest for a Nexus run,
     which is the recorded-vs-actual divergence the digest exists to close."""
@@ -74,7 +74,7 @@ def test_gate_asks_the_checker_for_the_engine_digest(captured_hash_cmd):
 
 
 def test_gate_carries_the_engine_build_into_the_manifest_facts(captured_hash_cmd):
-    """CON-5/ADR-55: the digest and the out-of-lock engine's build receipt are
+    """CON-5/ADR-67: the digest and the out-of-lock engine's build receipt are
     facts of the run, recorded verbatim. The receipt is the only trace of which
     engine sources produced a result: the wheel is not in the lock, so nothing
     else in the manifest can name them."""

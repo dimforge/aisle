@@ -110,7 +110,7 @@ def _graph_inventory(root: Path, tracked: set[str] | None) -> list[dict]:
                 "perception": (
                     env.get("AISLE_PERCEPTION", "L0 (default)") if env is not None else "—"
                 ),
-                # ADR-55: the engine is declared on the bridge like the rung,
+                # ADR-67: the engine is declared on the bridge like the rung,
                 # and a run on another engine is another environment; without
                 # this column every graph reads as Genesis.
                 "engine": (

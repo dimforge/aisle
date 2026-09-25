@@ -12,7 +12,7 @@
     "lock": "sha256:9b8a82a17ba68c192f045405feed3ae7046af9568bddcb398292c20f0ed6f5a8",
     "perception_audit_report": "sha256:27134904b4b739423085a9b3c9b23678658d39f7a48e00cd2fbeaedea8c7a4d8",
     "perception_auditor": "sha256:9f8515abe6a8a51737ed42f8720dbc202156e2a26f13b7100c2f30713b999613",
-    "perception_cli": "sha256:1a6bbbbc683e62f38d07230f75a0100cce41516dab0677dc723be993e0886467",
+    "perception_cli": "sha256:a962f0dd60c53804fc0ba853cfda34d8844a47e6064ec94776c2e77e9a23d29e",
     "perception_eligibility": "sha256:d18422c4bad1b2c7ebe1cd894cf213d6a7d5447856739456fdd6b8e7e25de7e2",
     "perception_eligibility_cli": "sha256:62c5b8facb273cf7ce50aa21f83aeff04efd7e338d0866adde4973e2f0970ccc",
     "perception_eligibility_module": "sha256:954d8af7b487fd653f80e51c58406d6bd8be086e47b100a88295afbe1db9cde4",
@@ -29,7 +29,7 @@
     "public_observation_source:src/aisle/harness/pilot_policy_surface.py": "sha256:bb08dc54cf6a86907d68bab554baab1d562ec754b2736812e68798b96395cf80",
     "registry": "sha256:2c3bb1574fddde14007e63c5e7a579c8de0b34cbbf74e874e7170b84ec9cce45",
     "research_prompt": "sha256:e736bbd6caa7236dbfafe92ae42c0c7f13088764af1b753f6685d398c111b7c0",
-    "seed_commitment_predecessor": "sha256:e4641df0a6444ad79c0f71eaf3e8986818a2826051132850d7f657a565a3199b",
+    "seed_commitment_predecessor": "sha256:75ccca13ca21969e10655e56df4219dd9aefdda71934553f5678b0e01fbb49e2",
     "spec": "sha256:e89398651eb537654d9e326f3fb53ba9ba98d77377522100d751debb55e86a82",
     "validators": "sha256:723318241bb9ce7065e97bcf66557c2180341bd0c0264ce94aa7bdd50cd52f7d"
   },
@@ -229,7 +229,7 @@
   "gate_record_hashes": {
     "CON-7 frozen set": "sha256:4e84ebe40d37cb26ef774e4fc6b46b54df7813ee051042308d1f409a9d9103ac"
   },
-  "git_head": "a238a28664b17f899103b03696a74deb701a5aef",
+  "git_head": "2b103ff1b5291f1ada997e5c265b62ac9c6661a3",
   "issue": 346,
   "pending_gates": [
     "BND-1 human-reviewed candidate amendment",

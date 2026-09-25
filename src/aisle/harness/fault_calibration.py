@@ -212,7 +212,7 @@ def run_rung(
     rollout there with --root so validation resolves the staged sources.
     Returns the receipt, the rollout result, and the episode rows.
 
-    sim_engine (ADR-55) is forwarded to the rollout so a calibration ladder
+    sim_engine (ADR-67) is forwarded to the rollout so a calibration ladder
     runs the engine the campaign selected, not whichever the runner defaults
     to; None leaves the graph's own declaration in charge."""
     subprocess.run(

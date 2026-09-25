@@ -16,7 +16,7 @@ its blob at <ref> — regenerating the local json or editing the checker
 after changing frozen code no longer blesses the change. JSON on stdout,
 logs on stderr, exit 0 iff ok.
 
---sim-engine <engine> adds ADR-55's engine attestation to any mode: the
+--sim-engine <engine> adds ADR-67's engine attestation to any mode: the
 `sim` block (`sim_engine_hash` over src/aisle/sim/** plus the engine build
 receipt) and that engine's own distribution in the attested set. It is
 recorded, never a gate: the frozen set stays engine neutral.
@@ -156,17 +156,17 @@ def _baseline_hash(root: Path, ref: str) -> tuple[str | None, str | None]:
 # the attested set beyond registry pip: sources — the sim core whose code
 # decides physics and gate verdicts (ADR-24 resolved question 1)
 ATTESTED_SIM_CORE = ("genesis-world", "torch", "dora-rs", "pyarrow")
-# ADR-55: the distribution that actually steps the scene, per engine. The
+# ADR-67: the distribution that actually steps the scene, per engine. The
 # core above is engine neutral, so a Nexus run used to attest genesis-world
 # and say nothing about the wheel whose solver produced the trajectories;
 # attested_set() adds the running engine's dist instead.
 ENGINE_DISTS = {
     "genesis": ("genesis-world",),
     "nexus": ("dimforge-nexus3d",),
-    # rapier steps the scene and the Nexus viewer renders it (ADR-56)
+    # rapier steps the scene and the Nexus viewer renders it (ADR-68)
     "rapier": ("rapier3d", "dimforge-nexus3d"),
 }
-#: The engine realization package (ADR-55, ADR-56): the engine selector, the
+#: The engine realization package (ADR-67, ADR-68): the engine selector, the
 #: Nexus and rapier backends, and their solver settings. Deliberately outside
 #: FROZEN_DIRS (widening the fence moves every Genesis env_hash and breaks
 #: the measured record's continuity), so it carries its own digest instead.
@@ -256,8 +256,8 @@ def classify_direct_url(direct_url: dict) -> str | None:
 
 
 def attested_set(root: Path, engine: str | None = None) -> list[str]:
-    """The dists whose provenance is checked. `engine` (ADR-55) adds the
-    running engine's own distribution; None keeps the pre-ADR-55 set."""
+    """The dists whose provenance is checked. `engine` (ADR-67) adds the
+    running engine's own distribution; None keeps the pre-ADR-67 set."""
     names = set(registry_pip_dists(root)) | set(map(canonical_name, ATTESTED_SIM_CORE))
     names |= {canonical_name(d) for d in ENGINE_DISTS.get(engine or "", ())}
     return sorted(names)
@@ -275,7 +275,7 @@ def sim_realization_files(root: Path) -> list[Path]:
 
 
 def sim_engine_hash(root: Path, engine: str, build: dict | None = None) -> dict:
-    """ADR-55 engine attestation: the identity env_hash cannot carry.
+    """ADR-67 engine attestation: the identity env_hash cannot carry.
 
     One sha256 over the engine name, the realization package
     (`src/aisle/sim/**`, which holds nexus_physics.toml's substeps, PGS
@@ -509,7 +509,7 @@ def main() -> int:
     parser.add_argument(
         "--sim-engine",
         default=None,
-        help="ADR-55 engine (genesis|nexus): report the engine-specific "
+        help="ADR-67 engine (genesis|nexus): report the engine-specific "
         "sim_engine_hash and attest that engine's own distribution",
     )
     args = parser.parse_args()
@@ -538,7 +538,7 @@ def main() -> int:
     env_hash, n_files = compute_env_hash(args.root)
     report: dict = {"ok": True, "env_hash": env_hash, "n_files": n_files}
     if args.sim_engine:
-        # ADR-55: recorded beside env_hash, never a gate; the frozen set is
+        # ADR-67: recorded beside env_hash, never a gate; the frozen set is
         # engine neutral and the realization package is not in it
         report["sim"] = sim_engine_hash(
             args.root, args.sim_engine, _engine_build(args.root, args.sim_engine)

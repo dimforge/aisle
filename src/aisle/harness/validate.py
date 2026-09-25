@@ -746,7 +746,7 @@ def validate_nodes(
     # TC-9/VAL-8: the perception rung is a property of the GRAPH, read once
     rung, bridge_ids, rung_errors = graph_perception_rung(nodes, manifests)
     errors.extend(rung_errors)
-    # ADR-55: the engine is declared on the bridge like the rung, so a typo
+    # ADR-67: the engine is declared on the bridge like the rung, so a typo
     # must be caught here rather than at launch
     errors.extend(graph_sim_engine_errors(nodes, bridge_ids))
     # ADR-32 §1: T4 goal blinding is likewise a property of the graph
@@ -1417,7 +1417,7 @@ def graph_perception_rung(nodes: list, manifests: dict) -> tuple[str, list[str],
 
 
 def graph_sim_engine_errors(nodes: list, bridge_ids: list[str]) -> list[dict]:
-    """VAL-8 companion for ADR-55: a sim bridge declaring AISLE_SIM_ENGINE
+    """VAL-8 companion for ADR-67: a sim bridge declaring AISLE_SIM_ENGINE
     must name an engine the harness knows.
 
     Deliberately minimal next to the rung: the engine forbids no topics, so
@@ -1440,7 +1440,7 @@ def graph_sim_engine_errors(nodes: list, bridge_ids: list[str]) -> list[dict]:
                 _entry(
                     "SIM_ENGINE_UNKNOWN",
                     {"node": bridge_id},
-                    f"unknown simulation engine {declared!r} declared by {bridge_id!r} (ADR-55)",
+                    f"unknown simulation engine {declared!r} declared by {bridge_id!r} (ADR-67)",
                     f"set AISLE_SIM_ENGINE to one of {list(ENGINES)}, or drop the key to "
                     "let the runner choose",
                 )

@@ -18,10 +18,10 @@ out/
 # second copy of the topology that silently goes stale.
 *-graph.html
 
-# ADR-55: receipt of the locally built Nexus wheel (tools/nexus_runtime.py)
+# ADR-67: receipt of the locally built Nexus wheel (tools/nexus_runtime.py)
 .nexus-runtime-receipt.json
-# ADR-56: receipt of the locally built rapier wheel (tools/rapier_runtime.py)
+# ADR-68: receipt of the locally built rapier wheel (tools/rapier_runtime.py)
 .rapier-runtime-receipt.json
 
-# ADR-55/ADR-56: pinned engine checkouts fetched by tools/engine_sources.py
+# ADR-67/ADR-68: pinned engine checkouts fetched by tools/engine_sources.py
 .engine-sources/

@@ -177,7 +177,7 @@ def test_bridge_info_shape():
         "perception": "L0",
         "segmentation_ids": {},
         "sim_backend": "metal",
-        # ADR-55: the engine that realized the scene
+        # ADR-67: the engine that realized the scene
         "sim_engine": "genesis",
     }
     assert info["platform"]
@@ -201,7 +201,7 @@ def test_bridge_config_from_env():
 
     with pytest.raises(ValueError, match="simulation backend"):
         parse_bridge_config({"AISLE_SIM_BACKEND": "auto"})
-    # ADR-55: the engine is graph-declared like the rung; unknown names and
+    # ADR-67: the engine is graph-declared like the rung; unknown names and
     # backends the engine cannot run are refused, never defaulted
     assert parse_bridge_config({}).sim_engine == "genesis"
     assert parse_bridge_config({"AISLE_SIM_ENGINE": "nexus"}).sim_engine == "nexus"
@@ -540,7 +540,7 @@ def test_publish_is_wired_to_the_gate_not_to_an_inline_check():
 
 
 def test_bridge_info_requires_the_rung_rather_than_defaulting_it():
-    """TC-9/BRG-8/ADR-55: `perception`, `segmentation_ids` and `sim_engine` are
+    """TC-9/BRG-8/ADR-67: `perception`, `segmentation_ids` and `sim_engine` are
     REQUIRED arguments. A defaulted rung would attest "L0" in the trace for a
     run that executed L1 — the recorded-vs-actual divergence the rung refusal
     and the env scrub exist to prevent, and one no test can catch because the
@@ -612,11 +612,11 @@ def test_l1_refuses_an_unusable_segmentation_id_map():
     require_usable_segmentation_ids({}, "L0")
 
 
-# -- ADR-55: timing sidecar ---------------------------------------------------
+# -- ADR-67: timing sidecar ---------------------------------------------------
 
 
 def test_step_timer_flushes_windows_with_engine_gpu_time(tmp_path):
-    """ADR-55 / BRG-6 (recorded-vs-actual): the bridge's timing sidecar
+    """ADR-67 / BRG-6 (recorded-vs-actual): the bridge's timing sidecar
     carries per-window step wall time, render wall time, sim seconds and the
     engine's GPU time when reported, so a run's performance is comparable
     across engines without a new topic (SPEC 010 untouched)."""
@@ -652,7 +652,7 @@ def test_step_timer_flushes_windows_with_engine_gpu_time(tmp_path):
 
 
 def test_debug_view_is_off_by_default_and_parses_presets():
-    """ADR-55 operator tooling: AISLE_DEBUG_VIEW adds a camera that feeds
+    """ADR-67 operator tooling: AISLE_DEBUG_VIEW adds a camera that feeds
     debug_view.mp4 only (no topic, SPEC 010 untouched): unset means none,
     `side` looks at the shelf front from the tray side, an explicit
     `eye;lookat` pair is honored, and a malformed value is refused."""

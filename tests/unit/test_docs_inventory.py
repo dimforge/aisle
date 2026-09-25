@@ -341,7 +341,7 @@ def test_bridge_is_found_by_module_path_not_node_id(tmp_path: Path):
 
 
 def test_graph_table_names_the_physics_engine(tmp_path: Path):
-    """ADR-55, CON-5: a graph declaring `AISLE_SIM_ENGINE: nexus` runs
+    """ADR-67, CON-5: a graph declaring `AISLE_SIM_ENGINE: nexus` runs
     different physics, which is a different environment. Without the engine
     column the generated inventory documented every graph as Genesis, and
     the Nexus package did not exist anywhere in the layout map."""

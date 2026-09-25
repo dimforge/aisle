@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and install AISLE's Nexus Python module from sibling checkouts (ADR-55).
+"""Build and install AISLE's Nexus Python module from sibling checkouts (ADR-67).
 
 Nexus is an optional engine outside the uv lock: this builds the `nexus3d`
 wheel with maturin from a nexus checkout (whose Cargo manifest resolves the
@@ -32,7 +32,7 @@ def receipt_path(root: Path | None = None) -> Path:
 
 
 def read_receipt(root: Path | None = None) -> dict:
-    """The ADR-55 engine build provenance, for a run manifest to carry.
+    """The ADR-67 engine build provenance, for a run manifest to carry.
 
     The receipt is gitignored and local to the machine that built the
     wheel, so recording it at rollout time is the only trace of which
@@ -68,7 +68,7 @@ def resolve_sources(
 
     Passing any path keeps the whole set local, so a developer working across
     sibling checkouts never gets a surprise mix of local and pinned sources
-    (ADR-55). With none given, only nexus is fetched: its manifest takes rapier
+    (ADR-67). With none given, only nexus is fetched: its manifest takes rapier
     from crates.io and patches kiss3d from git by rev, and cargo resolves both."""
     if nexus is not None or rapier is not None or kiss3d is not None:
         return (nexus or ROOT.parent / "nexus", rapier, kiss3d)

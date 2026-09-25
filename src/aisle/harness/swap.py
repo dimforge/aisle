@@ -46,7 +46,7 @@ FROZEN_ROOTS = (
     # wholesale can drop the TC-9 rung declaration (env rides the node) and
     # turn an L1 run into an L0 one while each mutation validates
     "src/aisle/nodes/dora_genesis.py",
-    # ADR-55: the engine realization is the bridge's other live half — the
+    # ADR-67: the engine realization is the bridge's other live half — the
     # module that decides which physics steps the scene, and (nexus_physics
     # .toml) the solver settings it steps with. env_hash does not fence it,
     # so a live swap would be the one way to change the physics of a running

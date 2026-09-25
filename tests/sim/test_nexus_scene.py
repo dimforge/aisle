@@ -1,4 +1,4 @@
-"""Sim acceptance tests for the Nexus engine backend (ADR-55): the frozen
+"""Sim acceptance tests for the Nexus engine backend (ADR-67): the frozen
 pharmacy scene (SPEC 020 SCN-1, SCN-3..5, SCN-7) and the bridge's object
 surface (SPEC 030), realized on Nexus.
 
@@ -75,7 +75,7 @@ def test_build_determinism(pristine):
 
 
 def test_placements_match_frozen_sampler(pristine):
-    """ADR-55: the Nexus builder places the boxes exactly where the frozen
+    """ADR-67: the Nexus builder places the boxes exactly where the frozen
     sampler says (same pure function, same seed), before any step."""
     from aisle.scenes.pharmacy import resolve_layout, sample_placements
 
@@ -171,7 +171,7 @@ def test_resting_boxes_hold_still(handle):
 
 
 def test_so101_urdf_matches_frozen_chain(so101_handle):
-    """ADR-55: the imported SO-101 kinematics agree with the frozen URDF
+    """ADR-67: the imported SO-101 kinematics agree with the frozen URDF
     chain (`aisle.kinematics`) at several configurations, so grasp planning
     and the guard see the same arm the physics does."""
     from aisle.kinematics import so101_chain
@@ -362,7 +362,7 @@ def store_handle():
 
 
 def test_store_build_realizes_the_planogram(store_handle):
-    """RS-1/RS-2 on Nexus (ADR-55, T16/ADR-19): the Nexus store is generated
+    """RS-1/RS-2 on Nexus (ADR-67, T16/ADR-19): the Nexus store is generated
     from the same planogram.toml as the Genesis one: the full stock spawns
     at its slots' world template poses with the composed unit yaw, the shelf
     boards carry that yaw too, the bin holds one item per category, counter
@@ -639,7 +639,7 @@ def test_wrist_cam_to_ee_matches_the_attached_nexus_camera(live):
 
 
 def test_debug_camera_attaches_after_build(live):
-    """ADR-55 operator tooling: the Nexus branch of `add_debug_camera`
+    """ADR-67 operator tooling: the Nexus branch of `add_debug_camera`
     (dora_genesis.py) joins a built scene, since Nexus accepts cameras at any
     time, renders at the debug resolution and leaves the frozen wire cameras
     untouched (SCN-5). The Genesis twin passes the literal "genesis", so this

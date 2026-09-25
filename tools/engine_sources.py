@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Materialize the pinned engine sources from GitHub (ADR-55, ADR-56).
+"""Materialize the pinned engine sources from GitHub (ADR-67, ADR-68).
 
 `engine-runtime.json` pins the two repositories AISLE builds wheels from,
 nexus and rapier, the same way `dora-runtime.json` pins the Dora CLI. Each is

@@ -6,7 +6,7 @@ rollout are fed tick by tick to the Nexus pharmacy scene built for the same
 seed, so the physics can be re-run offline under different solver settings
 (`--substeps`, `--contact-frequency`, `--pgs`) without dora. Reports how far
 the target box rose with the hand: the pinch-grasp fidelity check behind the
-`[sim]` defaults of src/aisle/sim/nexus_physics.toml (ADR-55). CON-8: JSON on
+`[sim]` defaults of src/aisle/sim/nexus_physics.toml (ADR-67). CON-8: JSON on
 stdout, logs on stderr, exit 0 iff the replay ran (not iff the grasp held).
 """
 

@@ -1,6 +1,6 @@
-"""Harness-side engine selection (ADR-55).
+"""Harness-side engine selection (ADR-67).
 
-The bridge learned `AISLE_SIM_ENGINE` in ADR-55; these tests cover the
+The bridge learned `AISLE_SIM_ENGINE` in ADR-67; these tests cover the
 harness half: the runner owns the choice (never the operator's shell), the
 graph declares it where the graph hash attests it, every sim-launching entry
 point can select it, and the attested identity and budgets follow the engine
@@ -36,7 +36,7 @@ def _graph_with_bridge_env(tmp_path: Path, env: dict, name: str = "engine.yaml")
 
 
 def test_engine_and_backend_are_scrubbed_from_the_ambient_environment():
-    """CON-5, ADR-55: `harness fleet` builds its child env from
+    """CON-5, ADR-67: `harness fleet` builds its child env from
     scrub_bringup_env(os.environ), so an ambient AISLE_SIM_ENGINE=nexus in an
     operator's shell would silently swap the physics of a run whose git_sha,
     env_hash and graph_hash all attest clean. Both the engine and its backend
@@ -55,7 +55,7 @@ def test_engine_and_backend_are_scrubbed_from_the_ambient_environment():
 
 
 def test_engine_check_takes_the_request_when_the_graph_declares_nothing(tmp_path):
-    """ADR-55: an undeclared graph runs what the caller asked for, and a
+    """ADR-67: an undeclared graph runs what the caller asked for, and a
     caller who asks for nothing gets the default engine."""
     from aisle.harness.rollout import engine_check
 
@@ -69,7 +69,7 @@ def test_engine_check_takes_the_request_when_the_graph_declares_nothing(tmp_path
 
 
 def test_engine_check_honours_a_graph_declaration_the_cli_does_not_contradict(tmp_path):
-    """ADR-55: the engine is declared on the bridge node like the perception
+    """ADR-67: the engine is declared on the bridge node like the perception
     rung, so a graph that names one is NOT silently overwritten with genesis
     when the runner is invoked without --sim-engine."""
     from aisle.harness.rollout import engine_check
@@ -84,7 +84,7 @@ def test_engine_check_honours_a_graph_declaration_the_cli_does_not_contradict(tm
 
 
 def test_engine_check_refuses_a_conflicting_request(tmp_path):
-    """ADR-55, HAR-2: mirroring TC-9's perception assertion, a graph
+    """ADR-67, HAR-2: mirroring TC-9's perception assertion, a graph
     declaring one engine and a flag demanding another is refused at the
     `sim_engine` gate — overwriting would measure physics the graph hash does
     not attest."""
@@ -98,7 +98,7 @@ def test_engine_check_refuses_a_conflicting_request(tmp_path):
 
 
 def test_engine_check_refuses_an_unknown_declaration(tmp_path):
-    """ADR-55 (TC-9's refuse-don't-guess rule): a typo must fail the gate
+    """ADR-67 (TC-9's refuse-don't-guess rule): a typo must fail the gate
     rather than fall back to the default engine."""
     from aisle.harness.rollout import engine_check
 
@@ -112,7 +112,7 @@ def test_engine_check_refuses_an_unknown_declaration(tmp_path):
 
 
 def test_instrumented_graph_refuses_rather_than_overwriting_a_declaration(tmp_path):
-    """ADR-55: the last writer obeys the same rule as the gate. Before this,
+    """ADR-67: the last writer obeys the same rule as the gate. Before this,
     instrumentation stamped the requested engine over the bridge's own
     declaration, so a nexus graph ran on genesis without a word."""
     from aisle.harness.rollout import EngineConflict, instrumented_graph
@@ -151,7 +151,7 @@ def test_sim_device_follows_the_engine_and_backend(engine, backend, device):
 
 
 def test_resolve_sim_identity_attests_the_nexus_gpu_device_on_linux(monkeypatch):
-    """CON-5, ADR-55: the same rule end-to-end through the gate's resolver."""
+    """CON-5, ADR-67: the same rule end-to-end through the gate's resolver."""
     from aisle.harness import rollout as rollout_module
 
     monkeypatch.setattr(rollout_module.platform_module, "system", lambda: "Linux")
@@ -167,7 +167,7 @@ def test_resolve_sim_identity_attests_the_nexus_gpu_device_on_linux(monkeypatch)
 
 
 def test_build_grace_and_pre_data_stall_are_engine_derived():
-    """HAR-1, ADR-55: the 420 s build grace and the 600 s pre-data stall were
+    """HAR-1, ADR-67: the 420 s build grace and the 600 s pre-data stall were
     both justified by the minutes-long Genesis build. Nexus builds a scene in
     seconds, so a wedged Nexus launch must clamp far sooner."""
     from aisle.harness.rollout import (
@@ -215,7 +215,7 @@ def _sim_engine_action(subparser_path: list[str]):
     ],
 )
 def test_every_sim_launching_entry_point_shares_one_engine_flag(command):
-    """ADR-55, CON-8: `harness rollout` was the only path that could select
+    """ADR-67, CON-8: `harness rollout` was the only path that could select
     an engine, so every other launcher forced genesis. They now share one
     flag definition, which is also why no path can drift to a different
     engine set."""
@@ -228,7 +228,7 @@ def test_every_sim_launching_entry_point_shares_one_engine_flag(command):
 
 
 def test_monolith_run_forwards_the_engine_to_the_runner(tmp_path, monkeypatch):
-    """MON-3, ADR-55: the monolithic launcher is a sim-launching entry point;
+    """MON-3, ADR-67: the monolithic launcher is a sim-launching entry point;
     it must not pin its module to Genesis."""
     from aisle.harness import monolith as mono
     from aisle.harness import rollout
@@ -244,7 +244,7 @@ def test_monolith_run_forwards_the_engine_to_the_runner(tmp_path, monkeypatch):
 
 
 def test_skill_registration_forwards_the_engine_to_the_eval_rollout(monkeypatch):
-    """CAP-6, ADR-55: a skill's evalcard records a measured pass rate, so the
+    """CAP-6, ADR-67: a skill's evalcard records a measured pass rate, so the
     eval must run on the engine the operator selected."""
     from aisle.harness import skill as skill_module
 
@@ -276,7 +276,7 @@ def test_skill_registration_forwards_the_engine_to_the_eval_rollout(monkeypatch)
 
 
 def test_fault_calibration_rung_passes_the_engine_to_the_rollout_argv(tmp_path, monkeypatch):
-    """FLT-9, ADR-55: a calibration ladder measures severities against a
+    """FLT-9, ADR-67: a calibration ladder measures severities against a
     clean baseline, so every rung must run the campaign's engine rather than
     the rollout default."""
     from aisle.harness import fault_calibration as fc
@@ -332,7 +332,7 @@ def test_fault_calibration_rung_passes_the_engine_to_the_rollout_argv(tmp_path, 
 
 
 def test_fleet_report_records_the_engine_it_ran(tmp_path):
-    """CON-5, ADR-55: `harness fleet` sets the engine in the child env after
+    """CON-5, ADR-67: `harness fleet` sets the engine in the child env after
     the scrub, so its report is where the run says which physics it measured
     — otherwise a fleet run carries no engine evidence at all."""
     from aisle.harness.fleet import run_fleet
@@ -421,7 +421,7 @@ def _stub_run(tmp_path, monkeypatch, engine="genesis"):
 
 
 def test_an_ambient_engine_never_reaches_the_launched_dataflow(tmp_path, monkeypatch):
-    """CON-5, ADR-55: the leak this scrub closes. With AISLE_SIM_ENGINE=nexus
+    """CON-5, ADR-67: the leak this scrub closes. With AISLE_SIM_ENGINE=nexus
     exported in the shell, the run must still launch — and attest — the
     engine the gate resolved."""
     import json
@@ -452,7 +452,7 @@ def test_an_ambient_engine_never_reaches_the_launched_dataflow(tmp_path, monkeyp
 
 
 def test_the_run_attests_the_resolved_engine_and_its_build_grace(tmp_path, monkeypatch):
-    """HAR-1, HAR-4, ADR-55: the manifest records the engine the gate
+    """HAR-1, HAR-4, ADR-67: the manifest records the engine the gate
     resolved (a lost key must fail, never attest genesis), and the launch
     clamps against that engine's build grace unless --build-grace-s says
     otherwise."""
@@ -515,7 +515,7 @@ def test_a_gate_without_an_engine_fails_instead_of_attesting_genesis(tmp_path, m
 
 
 def test_a_rollout_refuses_a_graph_declaring_another_engine(tmp_path, monkeypatch):
-    """ADR-55, HAR-2: the refusal reaches the CON-8 report as its own gate,
+    """ADR-67, HAR-2: the refusal reaches the CON-8 report as its own gate,
     before any budget reservation or launch."""
     from aisle.harness import rollout as rollout_module
 
@@ -547,7 +547,7 @@ def test_a_rollout_refuses_a_graph_declaring_another_engine(tmp_path, monkeypatc
 
 
 def test_validator_refuses_an_unknown_engine_on_the_bridge():
-    """VAL-8's companion for ADR-55: the engine rides the bridge's env like
+    """VAL-8's companion for ADR-67: the engine rides the bridge's env like
     the rung, so a typo must be a validation error rather than a launch-time
     surprise hours later."""
     from aisle.harness.validate import graph_sim_engine_errors, validate_nodes
@@ -561,7 +561,7 @@ def test_validator_refuses_an_unknown_engine_on_the_bridge():
 
 
 def test_validator_accepts_known_engines_and_an_absent_declaration():
-    """ADR-55: every pre-ADR-55 graph declares nothing and MUST keep
+    """ADR-67: every pre-ADR-67 graph declares nothing and MUST keep
     validating unchanged; a known engine is not an error either."""
     from aisle.harness.validate import graph_sim_engine_errors
 

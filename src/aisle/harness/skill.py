@@ -188,7 +188,7 @@ def run_skill_eval(
     skill: Skill, root: Path, run_rollout, run_id: str, sim_engine: str | None = None
 ) -> float:
     """The shipped mini-rollout against the STAGED candidate: returns the
-    measured pass rate (pass1). sim_engine (ADR-55) rides through to the
+    measured pass rate (pass1). sim_engine (ADR-67) rides through to the
     runner so the eval is not pinned to genesis; None honours whatever the
     eval graph declares."""
     cfg = skill.eval_cfg
@@ -223,7 +223,7 @@ def register_skill(
     sim_engine: str | None = None,
 ) -> dict:
     """validate → STAGE → lint → eval → evalcard → final lint (§8.4);
-    every failure rolls the registry back exactly. `sim_engine` (ADR-55)
+    every failure rolls the registry back exactly. `sim_engine` (ADR-67)
     selects the physics engine the eval rollout runs on.
 
     `sandbox=True` (ADR-40, #265) takes the §9.4 lower rung: admit the id so

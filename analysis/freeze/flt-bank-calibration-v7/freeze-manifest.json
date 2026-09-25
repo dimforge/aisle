@@ -2,14 +2,14 @@
   "analysis_script_hashes": {
     "src/aisle/harness/benchmark_statistics.py": "sha256:22cde3e9d7c5cc80874c7eec30aa2898e30476d6c939c94ab3009e8b12af641e",
     "src/aisle/harness/fault_bank.py": "sha256:be57dcc63453253e075ba3c6dde6498fda782ae7583bebc5955e0006ef6cfca3",
-    "src/aisle/harness/fault_calibration.py": "sha256:26d24c44ffc268be2e3c06ad5f24bac6f91b58507669707c9ae402ba460b18e0",
+    "src/aisle/harness/fault_calibration.py": "sha256:4ccd8397fb5b604aef044e85bad1d9bba531d63eb5dde4cfcbd3812801cd6ca2",
     "src/aisle/harness/fault_injector.py": "sha256:0f44b950bce85b75bb1c7d8b21684aba93fdb0b6dd191d368684062964d2469d"
   },
   "analysis_seed": 450001,
   "artifact_hashes": {
     "bank_commitment": "sha256:b4a2be405c0ad14e7f3c31ed25872b0cf2dc55fec231b9ce0dbee17ac00294c2",
     "baseline_graph": "sha256:303d08b37c6f0ea3ab221778437029393e0a266094941d2124b54648a3cf48ed",
-    "calibration": "sha256:26d24c44ffc268be2e3c06ad5f24bac6f91b58507669707c9ae402ba460b18e0",
+    "calibration": "sha256:4ccd8397fb5b604aef044e85bad1d9bba531d63eb5dde4cfcbd3812801cd6ca2",
     "calibration_summary": "sha256:f3c8f6175a59b4ab64e76b8889ee965bf8df7f6f5a8e07c9e74afb06babe9019",
     "clean_run_episodes": "sha256:ad8f4816b902354dd24b087e51cb826f51bb843567399e46b62abb45b8187728",
     "clean_run_manifest": "sha256:e6ba2825ff690e647e0990db6be9587a2551cfa3f844e3e7e918541543103900",
@@ -20,7 +20,7 @@
     "public_fault_menu_h6": "sha256:e5b965ce2f4445e77fe50a1bb0548912b14ac1c1903a5f98a8f89a98aeb1ddb9",
     "seed_commitment_predecessor": "sha256:fa9c240aff03f8af4518248eec38e16c940d8c9ad5b75e2a976177495ac45a7a",
     "spec": "sha256:a96d43fb9bf2166568177eab48aada2dc80288325f4f55fae18f9c4ffc4f96f0",
-    "swap_engine": "sha256:8157fca1f90e2a9de5b0be78c27c644c14eac60343eb71370d32349a8b6fb0e5",
+    "swap_engine": "sha256:7dcc0e48c9876be4194fb3accb863f3cf74a2f9c1faebdd61daa5293f74141db",
     "validators": "sha256:be57dcc63453253e075ba3c6dde6498fda782ae7583bebc5955e0006ef6cfca3"
   },
   "campaign_id": "flt-bank-calibration-v7",
@@ -219,15 +219,15 @@
       "seeds_source": "~/aisle-private/freeze/flt-bank-calibration-v2/seeds.json"
     },
     "spec": "450",
-    "superseded": "flt-bank-calibration-v6 (the calibration artifact src/aisle/harness/fault_calibration.py gained the ADR-55 `--sim-engine` passthrough and the swap engine src/aisle/harness/swap.py fenced src/aisle/sim; thresholds, seed lineage, pending gates and every other artifact are preserved)"
+    "superseded": "flt-bank-calibration-v6 (the calibration artifact src/aisle/harness/fault_calibration.py gained the ADR-67 `--sim-engine` passthrough and the swap engine src/aisle/harness/swap.py fenced src/aisle/sim; thresholds, seed lineage, pending gates and every other artifact are preserved)"
   },
-  "declaration_sha256": "sha256:4954c404b927ab5bbc572a58c48aa465180695513f01e903d8e2c9a311338733",
+  "declaration_sha256": "sha256:bb231c598e56d2240a8d3c8230586b847f6a0bd014389183d381bcdae5b38ce1",
   "frozen": false,
   "gate_record_hashes": {
     "CON-7 frozen set": "sha256:4e84ebe40d37cb26ef774e4fc6b46b54df7813ee051042308d1f409a9d9103ac",
     "FLT-1/2/3/11 bank coverage": "sha256:8048b90e32d3d78cd10f8275e1d78263c4bfca71288e225667019c7cda455c85"
   },
-  "git_head": "29ecabb7aa6414a7cbfdb8405f22d646f39730ec",
+  "git_head": "2b103ff1b5291f1ada997e5c265b62ac9c6661a3",
   "issue": 348,
   "pending_gates": [
     "CON-14 SPEC 450 approval",

@@ -150,7 +150,7 @@ work, and see `docs/troubleshooting.md` if runs behave strangely
 (leaked simulator processes from a previous killed run are the most
 common cause).
 
-## 3b. Optional: run the scene on the Nexus engine (ADR-55)
+## 3b. Optional: run the scene on the Nexus engine (ADR-67)
 
 Genesis is the default and the only engine behind the measured record. The
 graphs can also run on [Nexus](https://github.com/dimforge/nexus) (GPU
@@ -175,7 +175,7 @@ How far the Nexus path is actually exercised, as of today:
   fidelity rather than physics: Nexus box pixels come back at 0.47
   saturation against a declared 0.73 albedo, and the frame is flatter than
   Genesis's.
-- **Nexus stepping determinism is not established** (ADR-55): only build
+- **Nexus stepping determinism is not established** (ADR-67): only build
   determinism is. See [determinism](determinism.md) before reading anything
   reproducible into a Nexus run.
 
@@ -219,7 +219,7 @@ stiffness, PGS iterations) live in `src/aisle/sim/nexus_physics.toml`;
 and gripper commands into a fresh Nexus scene under overrides, which is how
 those values were chosen and how a grasp regression is reproduced offline.
 
-## 3c. Optional: run the scene on the rapier CPU engine (ADR-56)
+## 3c. Optional: run the scene on the rapier CPU engine (ADR-68)
 
 The third engine steps the same scenes with
 [rapier](https://github.com/dimforge/rapier) on the CPU and renders them

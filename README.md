@@ -33,8 +33,8 @@ coding agents (Claude Code / Codex) compose and evolve **typed dora-rs
 dataflows** against a **Genesis** physics scene, with frozen
 verification/reset and scoped safety structure. The scene contract is
 engine neutral; two optional engines run the same graphs for development,
-[Nexus](docs/decisions/ADR-55.md) on the GPU and
-[rapier](docs/decisions/ADR-56.md) on the CPU (`--sim-engine nexus|rapier`),
+[Nexus](docs/decisions/ADR-67.md) on the GPU and
+[rapier](docs/decisions/ADR-68.md) on the CPU (`--sim-engine nexus|rapier`),
 while Genesis stays the default and the only engine behind the measured
 record.
 <!-- claim:typed-dataflow-causal/readme -->

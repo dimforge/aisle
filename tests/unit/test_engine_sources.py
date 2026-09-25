@@ -1,5 +1,5 @@
-"""The engine sources are pinned by commit, not tracked by branch (ADR-55,
-ADR-56, CON-5).
+"""The engine sources are pinned by commit, not tracked by branch (ADR-67,
+ADR-68, CON-5).
 
 A wheel built from "whatever is checked out" cannot be traced back to a
 revision, which is the same reason `dora-runtime.json` pins the Dora CLI. The
@@ -36,7 +36,7 @@ def test_committed_pins_name_a_full_commit_for_every_built_engine():
 
 
 def test_the_linked_crates_are_pinned_once_in_the_engine_manifest():
-    """ADR-56: kiss3d and the rapier crates the engine links against are
+    """ADR-68: kiss3d and the rapier crates the engine links against are
     resolved by cargo from nexus's own manifest (rapier from its crates.io
     release, kiss3d by git revision). Pinning them here too would
     be a second source of truth that drifts silently."""

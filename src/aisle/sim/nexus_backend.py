@@ -1,4 +1,4 @@
-"""Nexus engine backend (ADR-55): the frozen scenes, rebuilt on Nexus.
+"""Nexus engine backend (ADR-67): the frozen scenes, rebuilt on Nexus.
 
 `build_scene` / `build_store` here are the Nexus counterparts of the frozen
 `aisle.scenes.pharmacy.build_scene` / `aisle.scenes.store.build_store`. They

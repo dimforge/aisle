@@ -1,4 +1,4 @@
-# rapier-engine constants (ADR-56, SCN-2 spirit: no physics constants inline
+# rapier-engine constants (ADR-68, SCN-2 spirit: no physics constants inline
 # in code). Kept outside the frozen scene directory for the same reason
 # nexus_physics.toml is: these describe how the rapier backend realizes the
 # frozen scene configuration, not the scene itself.

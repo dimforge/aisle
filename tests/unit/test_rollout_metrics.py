@@ -133,7 +133,7 @@ def test_rollout_relative_root_pins_absolute_paths_for_dora(tmp_path, monkeypatc
             "ok": True,
             "env_hash": "x",
             "sim_extra": "sim",
-            # ADR-55: the gate always resolves an engine; the runner now
+            # ADR-67: the gate always resolves an engine; the runner now
             # requires the key rather than defaulting to genesis
             "sim_engine": "genesis",
             "sim_backend": "metal",
@@ -337,7 +337,7 @@ def test_per_episode_wall_clamp_records_and_relaunches(tmp_path, monkeypatch):
             "ok": True,
             "env_hash": "x",
             "sim_extra": "sim",
-            # ADR-55: the gate always resolves an engine; the runner now
+            # ADR-67: the gate always resolves an engine; the runner now
             # requires the key rather than defaulting to genesis
             "sim_engine": "genesis",
             "sim_backend": "metal",
@@ -497,7 +497,7 @@ def test_relaunch_reaps_orphans_and_isolates_trace_dirs(tmp_path, monkeypatch):
             "ok": True,
             "env_hash": "x",
             "sim_extra": "sim",
-            # ADR-55: the gate always resolves an engine; the runner now
+            # ADR-67: the gate always resolves an engine; the runner now
             # requires the key rather than defaulting to genesis
             "sim_engine": "genesis",
             "sim_backend": "metal",
@@ -958,7 +958,7 @@ def test_progress_interval_env_override():
 
 
 def test_timing_summary_weights_windows_and_reports_rtf():
-    """ADR-55: the manifest's `sim_timing` is the step- and frame-weighted
+    """ADR-67: the manifest's `sim_timing` is the step- and frame-weighted
     aggregate of the bridge's sidecar rows, with the real-time factor as sim
     seconds over wall seconds spent stepping and rendering; the progress
     phrase renders it compactly and omits what the engine did not report."""

@@ -1,4 +1,4 @@
-"""Sim acceptance tests for the rapier engine backend (ADR-56): the frozen
+"""Sim acceptance tests for the rapier engine backend (ADR-68): the frozen
 pharmacy scene (SPEC 020 SCN-1, SCN-3..5, SCN-7) and the bridge's object
 surface (SPEC 030), stepped by rapier on the CPU and rendered through the
 Nexus viewer.
@@ -68,7 +68,7 @@ def pristine():
 
 
 def test_engine_render_config_matches_the_nexus_backend():
-    """ADR-56: the rapier engine renders through the Nexus viewer, which is
+    """ADR-68: the rapier engine renders through the Nexus viewer, which is
     process-wide and configured from nexus_physics.toml. rapier_physics.toml
     copies the camera, light and ground blocks so a reader can diff the two
     engines in one place; if the copies ever drift, a rapier run would claim a
@@ -101,7 +101,7 @@ def test_build_determinism(pristine):
 
 
 def test_placements_match_frozen_sampler(pristine):
-    """ADR-56: the rapier builder places the boxes exactly where the frozen
+    """ADR-68: the rapier builder places the boxes exactly where the frozen
     sampler says (same pure function, same seed), before any step."""
     from aisle.scenes.pharmacy import resolve_layout, sample_placements
 
@@ -125,7 +125,7 @@ def test_reachability_and_home(pristine):
 
 
 def test_joint_layout_matches_the_render_mirror(pristine):
-    """ADR-56 / TC-5: the renderer is driven by generalized coordinates, so
+    """ADR-68 / TC-5: the renderer is driven by generalized coordinates, so
     the rapier multibody and the Nexus robot that draws it must agree on the
     DoF order, the joint names and the link names. They load the same MJCF
     through two different importers; a silent disagreement would corrupt
@@ -281,7 +281,7 @@ def test_batched_build_oracle_covers_all_envs(twin_worlds):
 
 
 def test_bitwise_step_determinism(twin_worlds):
-    """CON-5 and the point of ADR-56: two identically seeded worlds stepped
+    """CON-5 and the point of ADR-68: two identically seeded worlds stepped
     the same number of times must produce bitwise identical state. Genesis
     reduces on Metal and Nexus colours constraints with GPU atomics, so
     neither can promise this; rapier stepped single-threaded can, and a
@@ -308,7 +308,7 @@ def test_bitwise_step_determinism(twin_worlds):
 
 
 def test_snapshot_restore_round_trip(twin_worlds):
-    """CON-5 on rapier (ADR-56): a world serializes to bytes and restores to
+    """CON-5 on rapier (ADR-68): a world serializes to bytes and restores to
     a world that steps to the same state. That is the engine-level state
     capture Genesis and Nexus have no equivalent of, and the foundation a
     replay or a mid-episode fork would stand on."""
@@ -345,7 +345,7 @@ def so101_handle():
 
 
 def test_so101_urdf_matches_frozen_chain(so101_handle):
-    """ADR-56: the imported SO-101 kinematics agree with the frozen URDF
+    """ADR-68: the imported SO-101 kinematics agree with the frozen URDF
     chain (`aisle.kinematics`) at several configurations, so grasp planning
     and the guard see the same arm the physics does."""
     from aisle.embodiment import profile_dof_indices
@@ -489,7 +489,7 @@ def store_handle():
 
 
 def test_store_build_realizes_the_planogram(store_handle):
-    """RS-1/RS-2 on rapier (ADR-56, T16/ADR-19): the rapier store is
+    """RS-1/RS-2 on rapier (ADR-68, T16/ADR-19): the rapier store is
     generated from the same planogram.toml as the Genesis one: the full stock
     spawns at its slots' world template poses with the composed unit yaw, the
     shelf boards carry that yaw too, the bin holds one item per category,
@@ -593,7 +593,7 @@ def test_cameras_render_all_passes(live):
     to the EE link; one pass yields rgb (uint8), metric depth (float32) and
     a segmentation map whose ids are the scene's own map (background -1).
     The poses behind those pixels were computed by rapier, not by the
-    renderer's solver, which is the whole bet of ADR-56."""
+    renderer's solver, which is the whole bet of ADR-68."""
     handle = live
     overhead, wrist = handle.cams["overhead"], handle.cams["wrist"]
     assert tuple(overhead.res) == (640, 480) and overhead.fov == 55
@@ -710,7 +710,7 @@ def test_wrist_cam_to_ee_matches_the_attached_camera(live):
 
 
 def test_debug_camera_attaches_after_build(live):
-    """ADR-56 operator tooling: the rapier branch of `add_debug_camera`
+    """ADR-68 operator tooling: the rapier branch of `add_debug_camera`
     (dora_genesis.py) joins a built scene, since it renders through the same
     Nexus viewer, renders at the debug resolution and leaves the frozen wire
     cameras untouched (SCN-5)."""

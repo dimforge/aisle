@@ -3,7 +3,7 @@
 Contract: same (seed, cfg, platform) ⇒ bitwise-identical initial
 `oracle_state`. Verified by `tests/sim/test_scene.py::test_build_determinism`
 on macOS arm64 (Metal backend, float32), and on the optional Nexus engine
-(ADR-55) by `tests/sim/test_nexus_scene.py::test_build_determinism`.
+(ADR-67) by `tests/sim/test_nexus_scene.py::test_build_determinism`.
 
 Backend selection is explicit and recorded. `uv sync --extra sim` plus
 `harness rollout --sim-extra sim` uses Metal on Darwin and CPU elsewhere,
@@ -36,13 +36,13 @@ Known platform caveats — recorded here rather than hidden (SCN-7):
   refused. That engine also holds one live renderable scene: a newer
   `build_scene` supersedes the previous scene's render nodes, so the older
   handle keeps its physics readbacks but its cameras raise.
-- Nexus stepping determinism is not established (ADR-55). Only build
+- Nexus stepping determinism is not established (ADR-67). Only build
   determinism is covered, by `tests/sim/test_nexus_scene.py`; the GPU broad
   phase and constraint coloring use atomics, so run-to-run bitwise equality
   after the first step is unmeasured. Nexus evidence must not be treated as
   reproducible until it is measured, and Genesis remains the only engine
   behind the measured record.
-- The rapier engine (ADR-56) is the one with stepping determinism, and it is
+- The rapier engine (ADR-68) is the one with stepping determinism, and it is
   measured: `tests/sim/test_rapier_scene.py::test_bitwise_step_determinism`
   drops a box into contact in two identically seeded worlds, steps both 200
   times and requires bitwise identical `oracle_state` and joint coordinates.

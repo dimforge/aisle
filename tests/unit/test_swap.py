@@ -477,7 +477,7 @@ def test_bridge_is_a_trust_anchor():
 
 
 def test_the_engine_realization_is_a_trust_anchor(tmp_path):
-    """HAR-10, CON-7, ADR-55: the engine realization (`src/aisle/sim`) is
+    """HAR-10, CON-7, ADR-67: the engine realization (`src/aisle/sim`) is
     the bridge's other live half — it decides WHICH physics steps the scene
     and, through nexus_physics.toml, the solver settings it steps with. It
     is outside the env_hash fence by decision, so a live swap would be the

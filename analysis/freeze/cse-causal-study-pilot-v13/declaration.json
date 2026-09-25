@@ -390,5 +390,5 @@
     "seeds_source": "~/aisle-private/freeze/cse-causal-study-pilot-v8/seeds.json"
   },
   "spec": "500",
-  "superseded": "cse-causal-study-pilot-v12 (the matched source set gained the ADR-55/ADR-56 engine seam: src/aisle/harness/cli.py, rollout.py and src/aisle/nodes/dora_genesis.py now select the physics engine behind AISLE_SIM_ENGINE. The protocol, seed lineage, decision rules and pending gates are unchanged, and Genesis remains the default and the only engine behind this campaign)"
+  "superseded": "cse-causal-study-pilot-v12 (the matched source set gained the ADR-67/ADR-68 engine seam: src/aisle/harness/cli.py, rollout.py and src/aisle/nodes/dora_genesis.py now select the physics engine behind AISLE_SIM_ENGINE. The protocol, seed lineage, decision rules and pending gates are unchanged, and Genesis remains the default and the only engine behind this campaign)"
 }
