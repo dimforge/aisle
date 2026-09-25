@@ -17,6 +17,14 @@ pytestmark = pytest.mark.unit
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.fixture(autouse=True)
+def engines_installed(monkeypatch):
+    """CI's unit tier syncs without the sim extra, so no engine is importable
+    and the gate would refuse on availability (ADR-67); these tests are about
+    the other gates. Engine refusal has its own tests."""
+    monkeypatch.setattr("aisle.sim.engine_available", lambda engine: True)
+
+
 def test_rollout_cli_exposes_the_attested_simulation_extra(monkeypatch):
     """HAR-1, CON-5: the public rollout path exposes the exact dependency
     selection; CUDA cannot be activated by an ambient hardware probe."""

@@ -150,6 +150,18 @@ def test_sim_device_follows_the_engine_and_backend(engine, backend, device):
     assert sim_device_for(engine, backend) == device
 
 
+def test_resolve_sim_identity_refuses_an_engine_that_is_not_installed(monkeypatch):
+    """CON-8, ADR-67: an engine whose package is missing refuses at the gate,
+    before anything launches, instead of dying inside the bridge."""
+    from aisle.harness import rollout as rollout_module
+
+    monkeypatch.setattr("aisle.sim.engine_available", lambda engine: engine != "rapier")
+    refused = rollout_module.resolve_sim_identity("sim", "rapier")
+    assert refused["ok"] is False and refused["gate"] == "sim_engine"
+    assert "'rapier' is not installed" in refused["detail"]
+    assert rollout_module.resolve_sim_identity("sim", "genesis")["ok"] is True
+
+
 def test_resolve_sim_identity_attests_the_nexus_gpu_device_on_linux(monkeypatch):
     """CON-5, ADR-67: the same rule end-to-end through the gate's resolver."""
     from aisle.harness import rollout as rollout_module

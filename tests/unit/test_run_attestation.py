@@ -192,6 +192,8 @@ def test_settle_records_actual_episode_count(tmp_path, monkeypatch):
 
     from aisle.harness import rollout as rollout_module
 
+    # the unit tier has no sim extra, so no engine is importable (ADR-67)
+    monkeypatch.setattr("aisle.sim.engine_available", lambda engine: True)
     root = _fake_root(tmp_path)
     # the trusted gate demands dist attestation evidence (ADR-24 D2/D3);
     # extend the fixture's stub checker to supply it
