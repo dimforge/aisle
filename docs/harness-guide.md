@@ -66,10 +66,9 @@ uv run harness rollout --graph graphs/expert_t0.yaml --tier T0 \
     --episodes 2 --seeds 0..1 --no-idea-gate --env-baseline local --sim-engine nexus
 ```
 
-`--build-grace-s` overrides the scene-build wall grace added to the first
-episode of each launch. The default is engine-derived: 420 s for Genesis,
-which compiles kernels, and 60 s for the other two, which build a scene in
-seconds.
+The scene-build wall grace added to the first episode of each launch is
+engine-derived: 420 s for Genesis, which compiles kernels, and 60 s for the
+other two, which build a scene in seconds.
 
 ## traces — query recorded evidence
 

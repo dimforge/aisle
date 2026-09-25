@@ -92,20 +92,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="attested dependency/backend selection: portable sim or Linux CUDA",
     )
     _add_sim_engine_flag(roll)
-    roll.add_argument(
-        "--episode-timeout-s",
-        type=int,
-        default=None,
-        help="sim seconds per episode, overriding the tier default (HAR-1); an "
-        "expert that finishes its work early otherwise idles to expiry",
-    )
-    roll.add_argument(
-        "--build-grace-s",
-        type=int,
-        default=None,
-        help="scene-build wall grace added to the first episode of each launch "
-        "(default is engine-derived: 420 s for Genesis, 60 s for Nexus)",
-    )
     roll.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     roll.add_argument(
         "--no-idea-gate",
@@ -889,8 +875,6 @@ def main() -> int:
             sim_extra=args.sim_extra,
             per_episode_wall_s=args.per_episode_wall_s,
             sim_engine=args.sim_engine,
-            build_grace_s=args.build_grace_s,
-            episode_timeout_s_override=args.episode_timeout_s,
         )
         return emit_report(report, lambda level, e: f"rollout {level}: {e}")
 

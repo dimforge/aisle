@@ -238,9 +238,3 @@ the rollout runner and the simulator bridge now select the physics engine
 behind `AISLE_SIM_ENGINE`. Calibration rules, seed lineages, decision rules and
 every pending gate are preserved, and Genesis remains the default and the only
 engine behind these campaigns.
-
-BND v16, CSE v28 and pilot v14 supersede v15, v27 and v13 after the shared
-harness CLI gained `--episode-timeout-s`: the operator override for an
-episode's SIM budget, added because a retail expert that finishes its work
-early otherwise idles to the tier's expiry. Thresholds, seed lineages and
-pending gates are unchanged.

@@ -124,11 +124,11 @@ uv run --extra sim --locked harness rollout --graph graphs/expert_t0.yaml --tier
   aggregates them over the run, so two engines can be compared on the same
   graph and seeds.
 - The per-episode wall clamp is the tier's budget (150 s for T0/T1) plus a
-  scene-build grace on the first episode of a launch (default 420 s, sized
-  for Genesis: 9m30s for T0). `--per-episode-wall-s N` overrides the tier
-  budget and `--build-grace-s N` the grace; a Nexus scene builds in seconds,
-  so `--build-grace-s 60` clamps a wedged Nexus episode in about a minute
-  past its tier budget.
+  scene-build grace on the first episode of a launch. The grace is
+  engine-derived: 420 s for Genesis, which compiles kernels (9m30s for T0),
+  and 60 s for Nexus and rapier, which build a scene in seconds, so a wedged
+  Nexus episode clamps about a minute past its tier budget.
+  `--per-episode-wall-s N` overrides the tier budget.
 - `AISLE_DEBUG_VIEW=side` (either engine) adds an operator camera after the
   build, looking at the shelf front from the tray side, and
   writes `runs/<run-id>/debug_view.mp4` at 10 fps, useful for seeing a grasp

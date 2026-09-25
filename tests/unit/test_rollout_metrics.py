@@ -1007,29 +1007,3 @@ def test_timing_summary_weights_windows_and_reports_rtf():
     assert genesis["gpu_ms_mean"] is None and genesis["render_ms_mean"] is None
     assert timing_phrase(genesis) == "physics 8.0 ms/step, tick 8.0 ms, rtf 1.25x"
     assert summarize_timing([]) == {} and timing_phrase({}) == ""
-
-
-def test_build_grace_is_a_cli_choice(tmp_path):
-    """HAR-1: the first-episode build grace defaults to the Genesis build
-    budget and is overridden per run (`--build-grace-s`), never inferred; a
-    negative value is refused before anything launches."""
-    import inspect
-
-    from aisle.harness.rollout import GENESIS_BUILD_BUDGET_S, rollout
-
-    assert inspect.signature(rollout).parameters["build_grace_s"].default is None
-    assert GENESIS_BUILD_BUDGET_S == 420
-    refused = rollout(
-        root=tmp_path,
-        graph=REPO_ROOT / "graphs" / "expert_t0.yaml",
-        tier="T0",
-        episodes=1,
-        seeds=[0],
-        reset_mode="teleport",
-        verifier="oracle",
-        run_id="grace",
-        branch="b",
-        no_idea_gate=True,
-        build_grace_s=-1,
-    )
-    assert refused["ok"] is False and "build_grace_s" in refused["error"]

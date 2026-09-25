@@ -454,15 +454,14 @@ def test_an_ambient_engine_never_reaches_the_launched_dataflow(tmp_path, monkeyp
 def test_the_run_attests_the_resolved_engine_and_its_build_grace(tmp_path, monkeypatch):
     """HAR-1, HAR-4, ADR-67: the manifest records the engine the gate
     resolved (a lost key must fail, never attest genesis), and the launch
-    clamps against that engine's build grace unless --build-grace-s says
-    otherwise."""
+    clamps against that engine's build grace."""
     import json
 
     from aisle.harness import rollout as rollout_module
     from aisle.harness.rollout import NEXUS_BUILD_BUDGET_S
 
     root, graph, _ = _stub_run(tmp_path, monkeypatch, engine="nexus")
-    common = dict(
+    report = rollout_module.rollout(
         root=root,
         graph=graph,
         tier="T0",
@@ -470,18 +469,16 @@ def test_the_run_attests_the_resolved_engine_and_its_build_grace(tmp_path, monke
         seeds=[0],
         reset_mode="teleport",
         verifier="oracle",
+        run_id="nexus-grace",
         branch="b",
         no_idea_gate=True,
         env_baseline="local",
     )
-    assert rollout_module.rollout(run_id="nexus-grace", **common)["ok"] is True
+    assert report["ok"] is True
     manifest = json.loads((root / "runs" / "nexus-grace" / "manifest.json").read_text())
     assert manifest["sim_engine"] == "nexus"
     assert manifest["sim_backend"] == "webgpu" and manifest["sim_device"] == "webgpu"
     assert manifest["build_grace_s"] == NEXUS_BUILD_BUDGET_S
-    assert rollout_module.rollout(run_id="explicit", build_grace_s=7, **common)["ok"] is True
-    explicit = json.loads((root / "runs" / "explicit" / "manifest.json").read_text())
-    assert explicit["build_grace_s"] == 7
 
 
 def test_a_gate_without_an_engine_fails_instead_of_attesting_genesis(tmp_path, monkeypatch):

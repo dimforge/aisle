@@ -84,8 +84,7 @@ def build_budget_s(engine: str) -> int:
 
     Genesis compiles kernels for minutes, which is what the 420 s default was
     sized for; Nexus builds the same scene in seconds, and rapier builds the
-    same Nexus scene to render through (ADR-68). An explicit `--build-grace-s`
-    still wins over whatever this returns."""
+    same Nexus scene to render through (ADR-68)."""
     return NEXUS_BUILD_BUDGET_S if engine in ("nexus", "rapier") else GENESIS_BUILD_BUDGET_S
 
 
@@ -114,10 +113,7 @@ def a7_per_episode_budget_s(episode_timeout_s: int, per_episode_budget_s: int) -
 
 
 def resolve_budgets(
-    tier: str,
-    verifier: str,
-    per_episode_wall_override_s: int | None = None,
-    episode_timeout_override_s: int | None = None,
+    tier: str, verifier: str, per_episode_wall_override_s: int | None = None
 ) -> tuple[int, int]:
     """(episode timeout in SIM seconds, per-episode WALL budget) for a run.
 
@@ -147,18 +143,6 @@ def resolve_budgets(
                 "measured retail A7 budget with an ADR-21 re-budget."
             )
         per_episode_budget_s = a7_per_episode_budget_s(episode_timeout_s, per_episode_budget_s)
-    if episode_timeout_override_s is not None:
-        # HAR-1: the SIM budget an episode gets. The tier default sizes the
-        # worst case, but an expert that finishes its work early then idles
-        # to expiry burns the rest of the clamp for nothing: the measured S1
-        # run stopped commanding at 147 sim s and stepped a still scene for
-        # the remaining 453. Shortening it changes what a timeout MEANS, so
-        # it is an explicit operator choice, recorded in the manifest, never
-        # a default.
-        episode_timeout_s = int(episode_timeout_override_s)
-        per_episode_budget_s = min(
-            per_episode_budget_s, a7_per_episode_budget_s(episode_timeout_s, 0)
-        )
     if per_episode_wall_override_s is not None:
         # lockstep VLA eval (ADR-38 amendment): in-turn inference freezes
         # sim time while wall time runs, so the wall clamp must scale with
@@ -1423,20 +1407,15 @@ def rollout(
     typed_stage_factory=None,
     record_simulator_work: bool = False,
     sim_engine: str | None = None,
-    build_grace_s: int | None = None,
-    episode_timeout_s_override: int | None = None,
 ) -> dict:
     """HAR-1: the full run. Returns the report dict (CON-8: caller emits).
 
     sim_engine ASSERTS the engine the graph's bridge declares (ADR-67); None
     means no assertion, so the declaration wins and an undeclared graph runs
-    the default engine.
-
-    build_grace_s is the scene-build wall grace the first episode of every
-    launch gets on top of its per-episode budget (and that each launch adds
-    to the run budget); the default is engine-derived (`build_budget_s`),
-    since Genesis builds in minutes and Nexus in seconds. An explicit
-    `--build-grace-s` wins over both."""
+    the default engine. The scene-build wall grace the first episode of every
+    launch gets (and that each launch adds to the run budget) is
+    engine-derived (`build_budget_s`), since Genesis builds in minutes and
+    Nexus in seconds."""
     # A relative root (`--root .`) must be pinned to THIS process's cwd:
     # dora runs with cwd = the run dir, so relative AISLE_RESULTS /
     # AISLE_TRACE_DIR strings would resolve to a nested runs/<id>/runs/<id>/
@@ -1444,8 +1423,6 @@ def rollout(
     root = root.resolve()
     if reset_mode not in ("teleport", "behavioral"):
         return {"ok": False, "error": f"unknown reset mode {reset_mode!r}"}
-    if build_grace_s is not None and build_grace_s < 0:
-        return {"ok": False, "error": f"build_grace_s must be >= 0, got {build_grace_s}"}
     if verifier not in ("oracle", "both", "realistic"):
         return {"ok": False, "error": f"unknown verifier {verifier!r}"}
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", run_id):
@@ -1581,10 +1558,7 @@ def rollout(
     # budget rather than waiting for the oracle (VER-5, increment 1b)
     try:
         episode_timeout_s, per_episode_budget_s = resolve_budgets(
-            tier,
-            verifier,
-            per_episode_wall_override_s=per_episode_wall_s,
-            episode_timeout_override_s=episode_timeout_s_override,
+            tier, verifier, per_episode_wall_override_s=per_episode_wall_s
         )
     except ValueError as exc:
         # refuse the unbudgeted tier/verifier combination the same way the
@@ -1645,9 +1619,7 @@ def rollout(
     env["AISLE_SIM_BACKEND"] = gates["sim_backend"]
     env["AISLE_SIM_ENGINE"] = gates["sim_engine"]
     started = time.monotonic()
-    build_grace_s = (
-        build_budget_s(gates["sim_engine"]) if build_grace_s is None else int(build_grace_s)
-    )
+    build_grace_s = build_budget_s(gates["sim_engine"])
     stall_grace_s = pre_data_stall_s(gates["sim_engine"])
     run_budget_s = timeout_s or (build_grace_s + per_episode_budget_s * episodes)
     if env_baseline != "local":
@@ -2034,9 +2006,6 @@ def rollout(
         "sim_timing": summarize_timing(read_timing_rows(run_dir)),
         # the first-episode build grace this run clamped against (HAR-1)
         "build_grace_s": build_grace_s,
-        # HAR-1: the SIM seconds each episode got, which the tier sets unless
-        # the operator shortened it; a timeout means nothing without it
-        "episode_timeout_s": episode_timeout_s,
         "seeds": seeds,
         "reset": reset_mode,
         "verifier": verifier,
