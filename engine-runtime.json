@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "comment": "ADR-55/ADR-56 engine sources: the two repositories AISLE builds wheels from. kiss3d is absent on purpose, and so are the rapier crates the engine links: nexus's own Cargo manifest patches those from git by rev, so cargo resolves them and this file does not pin them twice.",
+  "comment": "ADR-55/ADR-56 engine sources: the two repositories AISLE builds wheels from. kiss3d is absent on purpose, and so are the rapier crates the engine links: nexus's own Cargo manifest patches kiss3d from git by rev and takes the published rapier 0.36.0 release from crates.io, so cargo resolves both and this file does not pin them twice.",
   "sources": {
     "nexus": {
       "repository": "https://github.com/dimforge/nexus.git",
       "branch": "aisle-backend",
-      "commit": "ec162a81a8fb42841d2e50511ca064842214c8ba",
+      "commit": "830f2ed01be8ae932b1bf4434c97aaf507d6fc32",
       "builds": "the nexus3d wheel (the GPU engine and its viewer)"
     },
     "rapier": {

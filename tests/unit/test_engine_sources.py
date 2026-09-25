@@ -37,7 +37,8 @@ def test_committed_pins_name_a_full_commit_for_every_built_engine():
 
 def test_the_linked_crates_are_pinned_once_in_the_engine_manifest():
     """ADR-56: kiss3d and the rapier crates the engine links against are
-    resolved by cargo from nexus's own manifest. Pinning them here too would
+    resolved by cargo from nexus's own manifest (rapier from its crates.io
+    release, kiss3d by git revision). Pinning them here too would
     be a second source of truth that drifts silently."""
     pins = load_pins()
     assert "kiss3d" not in pins["sources"]

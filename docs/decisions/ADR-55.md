@@ -103,7 +103,8 @@ Genesis record.
   `[patch.crates-io]` path overrides until releases carry them:
   rapier3d-urdf composed URDF `rpy` as intrinsic XYZ Euler angles instead of
   fixed-axis roll-pitch-yaw (`Rz * Ry * Rx`), misplacing every SO-101 link
-  below the shoulder (rapier branch `fix-urdf-rpy`); and kiss3d replaced its
+  below the shoulder (rapier branch `fix-urdf-rpy`, released in rapier 0.36.0,
+  which Nexus now takes from crates.io); and kiss3d replaced its
   global mesh/texture/material managers whenever a second window or
   offscreen surface was created, orphaning the material of objects built
   before the sensor cameras existed, whose per-object uniform buffer then

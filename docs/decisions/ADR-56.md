@@ -68,8 +68,9 @@ achievable and where the physics tick is far cheaper.
   repository, branch and full commit of the two repositories AISLE builds
   wheels from, and `tools/engine_sources.py` fetches them by exact commit, the
   same discipline `dora-runtime.json` applies to the Dora CLI. The crates the
-  engine merely links against are pinned once, in nexus's own Cargo manifest,
-  by revision rather than branch: pinning them here as well would be two
+  engine merely links against are pinned once, in nexus's own Cargo manifest:
+  rapier by its published release, kiss3d by git revision rather than branch
+  until its fix is released: pinning them here as well would be two
   sources of truth for one dependency, and a branch would make the build
   irreproducible. The cost is that a new engine commit has to be pushed and
   the pin bumped before a pinned install can use it; an unpushed pin fails

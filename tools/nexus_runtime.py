@@ -2,8 +2,8 @@
 """Build and install AISLE's Nexus Python module from sibling checkouts (ADR-55).
 
 Nexus is an optional engine outside the uv lock: this builds the `nexus3d`
-wheel with maturin from a nexus checkout (whose Cargo manifest patches the
-rapier crates to a rapier checkout), installs it into the project environment
+wheel with maturin from a nexus checkout (whose Cargo manifest resolves the
+rapier and kiss3d crates it links), installs it into the project environment
 with `uv pip`, and writes a receipt naming both source commits so a run's
 `bridge_info` can be traced to the exact engine sources. `read_receipt()`
 is the public reader for that provenance: the run manifest and
@@ -68,12 +68,12 @@ def resolve_sources(
 
     Passing any path keeps the whole set local, so a developer working across
     sibling checkouts never gets a surprise mix of local and pinned sources
-    (ADR-55). With none given, only nexus is fetched: its manifest patches the
-    rapier and kiss3d crates from git by rev, and cargo resolves those."""
+    (ADR-55). With none given, only nexus is fetched: its manifest takes rapier
+    from crates.io and patches kiss3d from git by rev, and cargo resolves both."""
     if nexus is not None or rapier is not None or kiss3d is not None:
         return (nexus or ROOT.parent / "nexus", rapier, kiss3d)
-    # pinned build: nexus's manifest patches rapier and kiss3d from git by
-    # rev, so cargo fetches them and no local copy of either is needed
+    # pinned build: cargo fetches rapier from crates.io and kiss3d from git
+    # by rev, so no local copy of either is needed
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from engine_sources import materialize
 

@@ -6,8 +6,9 @@ nexus and rapier, the same way `dora-runtime.json` pins the Dora CLI. Each is
 fetched by exact commit.
 
 kiss3d is deliberately absent, and so are the rapier crates the engine links
-against: nexus's own Cargo manifest patches those from git by rev, so cargo
-resolves and caches them. Pinning them here as well would be two sources of
+against: nexus's own Cargo manifest patches kiss3d from git by rev and takes
+the published rapier release from crates.io, so cargo resolves and caches
+both. Pinning them here as well would be two sources of
 truth for one dependency.
 
 The engine installers use this when no local checkout is passed, so a machine
