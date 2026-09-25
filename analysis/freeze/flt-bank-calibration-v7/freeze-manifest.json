@@ -227,7 +227,7 @@
     "CON-7 frozen set": "sha256:4e84ebe40d37cb26ef774e4fc6b46b54df7813ee051042308d1f409a9d9103ac",
     "FLT-1/2/3/11 bank coverage": "sha256:8048b90e32d3d78cd10f8275e1d78263c4bfca71288e225667019c7cda455c85"
   },
-  "git_head": "94565954c43d800c1167294bf68f26a82f5f465f",
+  "git_head": "48b1c7032bdde5a29634bb2b6b9a41ce37620560",
   "issue": 348,
   "pending_gates": [
     "CON-14 SPEC 450 approval",

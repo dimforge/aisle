@@ -1,5 +1,5 @@
 {
-  "immutable_id": "sha256:91dde55c0a086f1326c1a5de21e5e3b25131718dd0e7f93d1b10b64c5505d001",
+  "immutable_id": "sha256:29ad548b3ff7833bacb79078c744b2ffd02ebf170c447d51614b3f423fde3fa2",
   "rows": [
     {
       "analysis": "the manipulated factor (SPEC 500 primary contrast)",
@@ -15,9 +15,9 @@
       "classification": "intentionally-different",
       "id": "mon1-02",
       "justification": "part of the bundled treatment; absence is a declared property, not missing data (MON-12)",
-      "monolithic": "src/aisle/harness/monolith.py#sha256:b087cf1ce69fc45a706cd3a66444d04603a5a332eb430d319745172996322520",
+      "monolithic": "src/aisle/harness/monolith.py#sha256:a19225bef036fd797208c8c1f35cf08165aab8e0dc3ab36282172b737206bbf3",
       "surface": "static validation and diagnostics",
-      "typed": "src/aisle/harness/validate.py#sha256:0e7a0cb172f454748485a1c7113a398aee7743e89d0799b9136610a1cf1481b5"
+      "typed": "src/aisle/harness/validate.py#sha256:58e860b6b5cbfe66948cbfddae25c2de46e17001f2fce868689c4829d963a117"
     },
     {
       "analysis": "treatment property",
@@ -80,7 +80,7 @@
       "justification": "none needed: same artifact",
       "monolithic": "src/aisle/nodes/monolith_broker.py#sha256:872741da1be8cfa0c89a4ee77ee4fb8a457f130a48228d39ebb8e09a84ee3d46",
       "surface": "trusted controller (bridge, reset, verifier, rollout client, turn barrier)",
-      "typed": "src/aisle/nodes/dora_genesis.py#sha256:3f0b53aaa2dbfcbcd88601b74cbf4dd1866b731e0ff1644839fd250cc7a52fd4"
+      "typed": "src/aisle/nodes/dora_genesis.py#sha256:1d2bfb3aaecf60e664649ed2ee9b09deded448080b7efcdc9b655af4c70fb3aa"
     },
     {
       "analysis": "excluded from task authority (MON-4); no analysis treatment",
@@ -114,9 +114,9 @@
       "classification": "identical",
       "id": "mon1-13",
       "justification": "none needed: same artifact",
-      "monolithic": "src/aisle/harness/monolith.py#sha256:b087cf1ce69fc45a706cd3a66444d04603a5a332eb430d319745172996322520",
+      "monolithic": "src/aisle/harness/monolith.py#sha256:a19225bef036fd797208c8c1f35cf08165aab8e0dc3ab36282172b737206bbf3",
       "surface": "episode budget, seeds, reset semantics, evaluator",
-      "typed": "src/aisle/harness/rollout.py#sha256:fc61099cefa7b9d8b81ba543feb63026dbf30601c08a6b3ee90edbf9cd3849fc"
+      "typed": "src/aisle/harness/rollout.py#sha256:7a09e1d7b7c259fe5a169f2e078ee43e536062038a8fe3462ab7dbfebfeda735"
     },
     {
       "analysis": "infrastructure-invalid records excluded in both arms; confinement status in the MON-8 tuple",

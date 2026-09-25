@@ -156,11 +156,11 @@
     "seed_commitment_predecessor": "sha256:b3f9d09b0757c72e7d370b583dbebfabc9afa99b2270ba8571fd88f470f4d2df",
     "session_runner": "sha256:cb33ab83f9125ea9708a73f639ca38ad539fbc77e6c5b03e0b49dc2e66abd8f0",
     "session_validators": "sha256:1b1c53d6389881c146726d865a741a681f3d5039c9bf99558a53ee368250971e",
-    "simulator_bridge": "sha256:409ab0a148a9a12764576c2636b324113c98f5c42fadfb7ffcf3374a47105bad",
+    "simulator_bridge": "sha256:b4d5e6eab8e60b65f2f0eb29c94f0634a58b921aae0bd643587d400ff689ba7c",
     "spec": "sha256:f5096c587cd9687859f2dc80ec807d1bbf959cb4e05c152154e71e47bdc1f593",
     "treatment_integrity": "sha256:b37162c6f295c5686da9b3089eb3bd96b69f68f01f41da0a784c4017658b10a6",
     "treatment_postflight": "sha256:27b591c291491ff1e943a62ec29ecd054b6caa29547b7872844cdc67dc403e9c",
-    "treatment_table": "sha256:334bf3dc5a27c567d54e9fdcfdd018b583588cbb30b3440d8503e964cae5fd90"
+    "treatment_table": "sha256:c065c48d1279c8e0676d5082ace9ca161c550a82206e201dc1db41a79a791983"
   },
   "campaign_id": "cse-causal-study-pilot-v13",
   "commands": [
@@ -565,7 +565,7 @@
   "declaration_sha256": "sha256:3369f7ad437d1fa7f7015a1516685a839def97898e464c6feebf2c131fe42bf0",
   "frozen": false,
   "gate_record_hashes": {},
-  "git_head": "94565954c43d800c1167294bf68f26a82f5f465f",
+  "git_head": "48b1c7032bdde5a29634bb2b6b9a41ce37620560",
   "issue": 347,
   "pending_gates": [
     "BND-12 task-band freeze (#346)",

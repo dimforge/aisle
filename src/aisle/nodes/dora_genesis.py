@@ -1186,12 +1186,14 @@ def main(
         def render_due(due: list[str]) -> dict[str, np.ndarray]:
             render_t0 = clock()
             frames = render_frames(handle.cams, due, work)
+            # timed before the operator view, so AISLE_DEBUG_VIEW never skews
+            # the cross-engine render numbers
+            if frames:
+                step_timer.record_render(clock() - render_t0)
             # the operator view rides the overhead tick so it never adds a
             # render pass of its own, and never reaches the wire
             if "rgb_overhead" in due and debug_video is not None:
                 debug_video.append(debug_cam.render()[0])
-            if frames:
-                step_timer.record_render(clock() - render_t0)
             return frames
 
         def publish(topic: str, frames: dict[str, np.ndarray] | None = None) -> None:

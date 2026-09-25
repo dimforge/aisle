@@ -229,7 +229,7 @@
   "gate_record_hashes": {
     "CON-7 frozen set": "sha256:4e84ebe40d37cb26ef774e4fc6b46b54df7813ee051042308d1f409a9d9103ac"
   },
-  "git_head": "94565954c43d800c1167294bf68f26a82f5f465f",
+  "git_head": "48b1c7032bdde5a29634bb2b6b9a41ce37620560",
   "issue": 346,
   "pending_gates": [
     "BND-1 human-reviewed candidate amendment",
