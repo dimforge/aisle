@@ -17,7 +17,13 @@ def _gate_inputs(tmp_path, monkeypatch, *, env_ok=True, episodes_left=10, attest
     stage, record = _stage(tmp_path)
     graph = Path(record["snapshot_record"]["snapshot_root"]) / "graphs/expert_t1.yaml"
     monkeypatch.setattr(
-        rollout, "resolve_sim_identity", lambda _: {"ok": True, "sim_backend": "genesis"}
+        rollout,
+        "resolve_sim_identity",
+        lambda extra, engine="genesis": {
+            "ok": True,
+            "sim_engine": engine,
+            "sim_backend": "genesis",
+        },
     )
     monkeypatch.setattr(rollout, "resolve_trusted_baseline", lambda *a: ("1" * 40, None))
     monkeypatch.setattr(

@@ -53,6 +53,7 @@ def test_typed_postflight_uses_remaining_run_budget(
             "ok": True,
             "env_hash": "x",
             "sim_extra": "sim",
+            "sim_engine": "genesis",
             "sim_backend": "metal",
             "sim_device": "mps",
         },
