@@ -33,6 +33,11 @@ Things to know before anything else:
   (#516). Install the corrected source pin rather than relying on version
   output, which is also 1.0.1 for the corrected binary.
 
+Genesis is the default simulation engine. Nexus and rapier are optional source
+builds installed after this locked environment; see the
+[simulation backend guide](simulation-backends.md) for a comparison and the
+shortest install, verify, and selection path.
+
 On Ubuntu 24.04, install the CPU quickstart's rendering prerequisites. Genesis
 constructs an offscreen renderer even when physics runs on CPU:
 
@@ -201,11 +206,11 @@ argument switches the whole build to local sources, so you never get a
 half-pinned, half-local mix. Then:
 
 ```bash
-uv run --extra sim --locked pytest -m sim tests/sim/test_nexus_scene.py
+uv run --no-sync pytest -m sim tests/sim/test_nexus_scene.py
 ```
 
 ```bash
-uv run --extra sim --locked harness rollout --graph graphs/expert_t0.yaml --tier T0 \
+uv run --no-sync harness rollout --graph graphs/expert_t0.yaml --tier T0 \
     --episodes 2 --seeds 0..1 --no-idea-gate --env-baseline local --sim-engine nexus
 ```
 
@@ -236,14 +241,22 @@ uv run --no-sync python tools/rapier_runtime.py install
 
 `--rapier ../rapier` builds from a local checkout instead.
 
-`--no-sync` matters here: a syncing `uv run` would reinstall the locked
-environment first and take the Nexus wheel back out, which is the renderer
-this engine needs.
+Keep `--no-sync` on the installer and subsequent commands so no sync step runs
+or changes the environment containing the out-of-lock Nexus wheel that this
+engine needs for rendering.
 
 `tools/rapier_runtime.py verify` reports the solver's receipt and the
 renderer's together, so a half-installed environment is visible before a run
 rather than at the first render. Its engine constants live in
 `src/aisle/sim/rapier_physics.toml`, alongside the Nexus ones.
+
+Run the same graph through rapier without another sync step:
+
+```bash
+uv run --no-sync python tools/rapier_runtime.py verify
+uv run --no-sync harness rollout --graph graphs/expert_t0.yaml --tier T0 \
+    --episodes 2 --seeds 0..1 --no-idea-gate --env-baseline local --sim-engine rapier
+```
 
 ## 4. Where to go next
 
