@@ -37,6 +37,8 @@ ARTIFACTS  git: dataflow YAML, skills/, manifests, evalcards
 EVIDENCE   runs/: Arrow traces, videos, results, idea tree
 EXECUTION  dora-rs runtime — typed topics, dynamic node add/remove
 WORLD      Genesis physics scene (pharmacy desk; retail store)
+             optionally Nexus on the GPU (ADR-67) or rapier on the CPU
+             (ADR-68): same scenes, same bridge node
 ```
 
 The agent never touches the simulator directly. It edits **artifacts**
@@ -155,7 +157,7 @@ Safety is structural, not behavioral (H5):
   code can never be hot-swapped on a live dataflow (`harness swap`
   refuses, HAR-10).
 
-## The world (Genesis)
+## The world (Genesis, optionally Nexus)
 
 `src/aisle/scenes/` builds scenes from (seed, embodiment, tier) — a
 function, not a script, so reset/batching/randomization are all
@@ -171,6 +173,20 @@ speaks Arrow on the contract topics. Tiers (T0–T4 desk, S1–S3 retail)
 select task difficulty; the perception ladder (L0 oracle poses → L1
 ground-truth segmentation → L2 full pixels) selects which pose source a
 graph may use.
+
+The scene contract is engine neutral: the bridge only ever touches
+`robot`, entity, link and camera objects through the small duck-typed
+surface Genesis exposes, so another engine can realize the same scenes
+behind it. **Genesis** is the default and the only engine behind the
+measured record. **Nexus** (ADR-67, `src/aisle/sim/nexus_backend.py`)
+realizes them on the GPU, and **rapier** (ADR-68,
+`src/aisle/sim/rapier_backend.py`) on the CPU, rendering through the Nexus
+viewer so the two share one camera model. `aisle.sim` dispatches
+`build_scene` / `build_store` on `AISLE_SIM_ENGINE`, which
+`harness rollout --sim-engine` injects into the bridge node and records in
+the run manifest. The bridge node itself is shared, unchanged. Results are
+not comparable across engines, and Nexus stepping determinism is not
+established ([determinism](determinism.md)).
 
 ## Verification and reset (frozen)
 

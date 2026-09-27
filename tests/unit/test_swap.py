@@ -476,6 +476,27 @@ def test_bridge_is_a_trust_anchor():
     assert isinstance(result, str) and "trust anchor" in result
 
 
+def test_the_engine_realization_is_a_trust_anchor(tmp_path):
+    """HAR-10, CON-7, ADR-67: the engine realization (`src/aisle/sim`) is
+    the bridge's other live half — it decides WHICH physics steps the scene
+    and, through nexus_physics.toml, the solver settings it steps with. It
+    is outside the env_hash fence by decision, so a live swap would be the
+    one way to change the physics of a running attested dataflow."""
+    graphs = tmp_path / "graphs"
+    graphs.mkdir()
+    graph = graphs / "toy.yaml"
+    graph.write_text(
+        yaml.safe_dump(
+            {"nodes": [{"id": "sim-engine", "path": "../src/aisle/sim/nexus_backend.py"}]},
+            sort_keys=False,
+        )
+    )
+    result = swapped_graph_doc(
+        graph, "sim-engine", {"id": "sim-engine", "path": "replacement.py"}, tmp_path
+    )
+    assert isinstance(result, str) and "trust anchor" in result
+
+
 def test_swap_refuses_a_rung_change_even_on_an_unanchored_bridge(tmp_path):
     """Issue #127 defense in depth: anchoring dora-genesis closes today's
     path, but the rung rule binds ANY sim_bridge provider — a future

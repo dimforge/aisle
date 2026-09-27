@@ -109,6 +109,32 @@ uv run --extra sim --locked harness rollout --graph graphs/expert_t0.yaml --tier
   overrides (both recorded in the run manifest). Research agents run
   without them: rollouts then require an open idea-tree entry (HAR-8)
   and a trusted frozen-set baseline (ADR-21).
+- While the run waits on dora, a progress line goes to stderr every 15 s:
+  the phase (scene build before the first trace byte, then the running
+  episode against its wall budget), the last verdict, and the run deadline.
+  `AISLE_ROLLOUT_PROGRESS_S` changes the cadence; `0` silences it. Stdout
+  stays the single JSON report (CON-8). Once physics runs, the line also
+  carries the recent performance: wall time of the physics step call and of
+  the whole bridge tick (the step plus the state reads that block on the
+  GPU, which is the honest cost when the step call is an asynchronous
+  submit), the engine's GPU time per step when it reports one (Nexus does,
+  Genesis does not), render time per frame, and the real-time factor.
+- The bridge writes those numbers per 100-step window to
+  `runs/<run-id>/sim_timing.jsonl`, and the manifest's `sim_timing` block
+  aggregates them over the run, so two engines can be compared on the same
+  graph and seeds.
+- The per-episode wall clamp is the tier's budget (150 s for T0/T1) plus a
+  scene-build grace on the first episode of a launch. The grace is
+  engine-derived: 420 s for Genesis, which compiles kernels (9m30s for T0),
+  and 60 s for Nexus and rapier, which build a scene in seconds, so a wedged
+  Nexus episode clamps about a minute past its tier budget.
+  `--per-episode-wall-s N` overrides the tier budget.
+- `AISLE_DEBUG_VIEW=side` (either engine) adds an operator camera after the
+  build, looking at the shelf front from the tray side, and
+  writes `runs/<run-id>/debug_view.mp4` at 10 fps, useful for seeing a grasp
+  slip in profile. `AISLE_DEBUG_VIEW=px,py,pz;lx,ly,lz` sets an explicit eye
+  and look-at in the base frame. The recorded traces and `overhead.mp4` are
+  unchanged: this camera is not a topic.
 - Results land in `runs/<run-id>/`: per-episode results JSON, Arrow
   traces, and videos. `runs/` is gitignored; every run is reproducible
   from (graph hash, env hash, seed list) (CON-5).
@@ -123,6 +149,101 @@ Sim runs want the machine to themselves — close other GPU/CPU-heavy
 work, and see `docs/troubleshooting.md` if runs behave strangely
 (leaked simulator processes from a previous killed run are the most
 common cause).
+
+## 3b. Optional: run the scene on the Nexus engine (ADR-67)
+
+Genesis is the default and the only engine behind the measured record. The
+graphs can also run on [Nexus](https://github.com/dimforge/nexus) (GPU
+rigid bodies, Metal on macOS) for development: the bridge picks the engine
+from `AISLE_SIM_ENGINE`, which `harness rollout --sim-engine nexus` injects
+into the bridge node and records in the manifest. Results are not
+comparable across engines.
+
+How far the Nexus path is actually exercised, as of today:
+
+- The **pharmacy desk** scene with the franka and so101 embodiments, the
+  **retail store** scene and the **mobile** embodiment are all covered by
+  `tests/sim/test_nexus_scene.py` (placements, IK and home pose, the
+  overhead/wrist passes, the realized wrist calibration, stepping, teleport
+  reset, re-basing, batched builds).
+- The **L0 and L1** rungs run end to end: single-seed expert rollouts of
+  T0, T1 and T4 succeed, and `test_l1_estimate_matches_nexus_ground_truth`
+  pins the estimator against ground truth inside 1 mm.
+- The **L2** rung does not work on Nexus. The open-vocabulary detector
+  refuses every frame (`identity margin -0.016 under the 0.01 floor`), so
+  expert_t1_l2 and expert_t2 fail with `never_grasped`. The cause is render
+  fidelity rather than physics: Nexus box pixels come back at 0.47
+  saturation against a declared 0.73 albedo, and the frame is flatter than
+  Genesis's.
+- **Nexus stepping determinism is not established** (ADR-67): only build
+  determinism is. See [determinism](determinism.md) before reading anything
+  reproducible into a Nexus run.
+
+Nexus is not part of the lock, so its Python module is built from source.
+`engine-runtime.json` pins that source the way `dora-runtime.json` pins the
+Dora CLI: repository, branch and full commit. Nothing else has to be checked
+out first.
+
+```bash
+uv run --no-sync python tools/nexus_runtime.py install
+```
+
+That fetches the pinned nexus commit into `.engine-sources/` (gitignored),
+builds with `maturin` (`--features metal` on macOS), installs the wheel with
+`uv pip`, and writes a receipt naming the commit it built. The rapier and
+kiss3d crates the engine links against are NOT fetched here: nexus's own
+Cargo manifest takes the published rapier 0.36.0 from crates.io and patches
+kiss3d from git by revision, so cargo resolves and caches both, and
+`engine-runtime.json` does not pin them a second time.
+
+Working across local checkouts instead? Pass `--nexus ../nexus`. Any path
+argument switches the whole build to local sources, so you never get a
+half-pinned, half-local mix. Then:
+
+```bash
+uv run --extra sim --locked pytest -m sim tests/sim/test_nexus_scene.py
+```
+
+```bash
+uv run --extra sim --locked harness rollout --graph graphs/expert_t0.yaml --tier T0 \
+    --episodes 2 --seeds 0..1 --no-idea-gate --env-baseline local --sim-engine nexus
+```
+
+Plain `uv sync` removes the wheel (it is not in the lock); reinstall with the
+command above. `AISLE_SIM_BACKEND` accepts `metal`, `webgpu`, `cuda` or `cpu`
+for Nexus, matching the features the wheel was built with.
+
+The solver settings Nexus needs for the pick-and-place (substeps, contact
+stiffness, PGS iterations) live in `src/aisle/sim/nexus_physics.toml`;
+`tools/nexus_grasp_replay.py --run runs/<id>` replays a recorded run's joint
+and gripper commands into a fresh Nexus scene under overrides, which is how
+those values were chosen and how a grasp regression is reproduced offline.
+
+## 3c. Optional: run the scene on the rapier CPU engine (ADR-68)
+
+The third engine steps the same scenes with
+[rapier](https://github.com/dimforge/rapier) on the CPU and renders them
+through the Nexus viewer, so a rapier run and a Nexus run differ only in the
+solver. Select it with `harness rollout --sim-engine rapier`.
+
+It needs BOTH wheels: the Nexus one above for the renderer, and the rapier
+Python bindings, which are also outside the lock and pinned in
+`engine-runtime.json`:
+
+```bash
+uv run --no-sync python tools/rapier_runtime.py install
+```
+
+`--rapier ../rapier` builds from a local checkout instead.
+
+`--no-sync` matters here: a syncing `uv run` would reinstall the locked
+environment first and take the Nexus wheel back out, which is the renderer
+this engine needs.
+
+`tools/rapier_runtime.py verify` reports the solver's receipt and the
+renderer's together, so a half-installed environment is visible before a run
+rather than at the first render. Its engine constants live in
+`src/aisle/sim/rapier_physics.toml`, alongside the Nexus ones.
 
 ## 4. Where to go next
 

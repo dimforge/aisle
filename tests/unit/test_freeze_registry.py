@@ -409,7 +409,7 @@ def test_committed_registrations_check_clean_with_withheld_seeds():
     registration names it in `superseded`; drift with no successor is the
     refusal the registry promises (analysis/freeze/README.md)."""
     manifests = _committed_manifests()
-    assert len(manifests) == 65
+    assert len(manifests) == 69
     superseded_ids: set[str] = set()
     for path in manifests:
         declaration = json.loads(path.with_name("declaration.json").read_text())
@@ -451,7 +451,7 @@ def test_confirmatory_registrations_carry_a_refused_freeze():
         assert "independent statistical review" in refusal["errors"][0]
 
 
-@pytest.mark.parametrize("previous_version,current_version", [(6, 7), (7, 8)])
+@pytest.mark.parametrize("previous_version,current_version", [(6, 7), (7, 8), (8, 9), (9, 10)])
 def test_hardened_perception_registration_requires_a_new_audit(previous_version, current_version):
     """BND-5/BND-12: a changed auditor cannot inherit a passed historical audit."""
     root = REPO_ROOT / "analysis/freeze"
@@ -470,8 +470,8 @@ def test_hardened_perception_registration_requires_a_new_audit(previous_version,
 def test_shared_cli_successor_preserves_bnd_protocol_and_review_gates():
     """BND-12/BND-13: shared CLI changes need a successor without changing calibration rules."""
     root = REPO_ROOT / "analysis/freeze"
-    previous = json.loads((root / "bnd-task-band-calibration-v12/freeze-manifest.json").read_text())
-    current = json.loads((root / "bnd-task-band-calibration-v13/freeze-manifest.json").read_text())
+    previous = json.loads((root / "bnd-task-band-calibration-v14/freeze-manifest.json").read_text())
+    current = json.loads((root / "bnd-task-band-calibration-v15/freeze-manifest.json").read_text())
     assert current["seed_commitment"] == previous["seed_commitment"]
     for key in (
         "analysis",

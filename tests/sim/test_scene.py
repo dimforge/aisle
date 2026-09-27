@@ -195,3 +195,21 @@ def test_physics_stability_at_substeps_one():
         assert abs(z - initial[name]) < 0.02, (name, initial[name], z)
         vel = to_numpy(entity.get_dofs_velocity()).reshape(-1)
         assert float(abs(vel).max()) < 0.5, (name, vel)
+
+
+def test_debug_camera_attaches_after_build(handle):
+    """ADR-67 operator tooling: AISLE_DEBUG_VIEW's camera joins a built
+    Genesis scene through the visualizer's debug path (the frozen builder
+    fixes the wire cameras at build, SCN-5), renders at the debug resolution
+    and leaves the overhead camera untouched."""
+    from aisle.nodes.dora_genesis import DEBUG_CAMERA_RES, add_debug_camera, parse_debug_view
+
+    eye, lookat = parse_debug_view(
+        {"AISLE_DEBUG_VIEW": "side"}, resolve_layout(load_physics(), "franka")
+    )
+    camera = add_debug_camera(handle.scene, "genesis", eye, lookat)
+    frame = np.asarray(camera.render(rgb=True)[0])
+    assert frame.shape == (DEBUG_CAMERA_RES[1], DEBUG_CAMERA_RES[0], 3)
+    assert frame.std() > 0
+    assert set(handle.cams) == {"overhead", "wrist"}
+    assert np.asarray(handle.cams["overhead"].render(rgb=True)[0]).shape == (480, 640, 3)

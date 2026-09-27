@@ -14,6 +14,29 @@ uv sync --extra sim
 Anything that touches the simulator needs the extra; plain sync is only
 for pure-unit work.
 
+That sync also removes the optional engine wheels, silently: neither
+`nexus3d` nor `rapier3d` is in the
+lock ([getting started](getting-started.md) §3b and §3c), so any `uv sync`
+drops them and `--sim-engine nexus` then refuses at the `sim_engine` gate
+with `simulation engine 'nexus' is not installed in this environment`.
+Reinstall them from the commits `engine-runtime.json` pins:
+
+```bash
+uv run --no-sync python tools/nexus_runtime.py install
+```
+
+```bash
+uv run --no-sync python tools/rapier_runtime.py install
+```
+
+Keep `--no-sync` on those: a syncing `uv run` reinstalls the locked
+environment first and takes the other engine wheel back out.
+
+A pinned install that fails with `upload-pack: not our ref` means the pinned
+commit is not on the remote, usually because a local engine commit has not
+been pushed yet. The fetch refuses rather than silently building something
+else; push the branch, or pass a local checkout path to build from it.
+
 ## Leaked simulator processes (the first thing to check)
 
 A timeout-killed or crashed `dora run` leaves orphaned node processes
@@ -25,7 +48,7 @@ Before debugging ANY perf/timing weirdness:
 
 ```bash
 uptime                          # load average sane for an idle box?
-ps aux | grep -E "dora|genesis" | grep -v grep
+ps aux | grep -E "dora|genesis|nexus|rapier" | grep -v grep
 ```
 
 Kill leftovers by their run working directory rather than pattern-
@@ -96,6 +119,28 @@ The refusal JSON says why; the common ones:
 - One machine, one sim run. Parallel sim runs (or a parallel `uv sync`
   / cargo build during a run) contend for the GPU/CPU and corrupt
   timing.
+
+## Nexus engine refusals (ADR-67, optional engine)
+
+- **`this nexus scene was superseded by a newer build_scene in this
+  process`**: the Nexus engine holds one live renderable scene per
+  process. A newer build takes the viewer's render nodes, and the older
+  handle's cameras raise from then on (its physics readbacks still work,
+  and the viewer frees those cameras, so a process can build any number of
+  scenes).
+  Build one scene per process, or read from the newest handle. The sim
+  tests build a fresh scene per test for exactly this reason.
+- **`nexus already initialized with backend 'X'; build_scene requires
+  'Y'`**: like `gs.init`, the backend is fixed at the first build and
+  cannot be mixed within a process. Set `AISLE_SIM_BACKEND` once
+  (`metal`, `webgpu`, `cuda` or `cpu`) and restart.
+- **`the installed nexus3d was built without the metal feature`** (or
+  `cuda`): the wheel was built for another GPU API. Rebuild it with
+  `tools/nexus_runtime.py install`, which defaults the feature per host
+  (`metal` on macOS, `webgpu` elsewhere) and takes `--feature` to override.
+- Nexus stepping determinism is not established, so a Nexus run that does
+  not replicate is not by itself a bug report; see
+  [determinism](determinism.md).
 
 ## Nondeterminism (same seed, different result)
 

@@ -49,9 +49,10 @@ def _fixture(tmp_path, monkeypatch):
     monkeypatch.setattr(
         rollout,
         "resolve_sim_identity",
-        lambda extra: {
+        lambda extra, engine="genesis": {
             "ok": True,
             "sim_extra": extra,
+            "sim_engine": engine,
             "sim_backend": "genesis",
             "sim_device": "fixture",
         },

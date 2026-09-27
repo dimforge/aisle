@@ -15,10 +15,18 @@ branch a research agent cannot move), and this checker itself must match
 its blob at <ref> — regenerating the local json or editing the checker
 after changing frozen code no longer blesses the change. JSON on stdout,
 logs on stderr, exit 0 iff ok.
+
+--sim-engine <engine> adds ADR-67's engine attestation to any mode: the
+`sim` block (`sim_engine_hash` over src/aisle/sim/** plus the engine build
+receipt) and that engine's own distribution in the attested set. The digest
+is recorded beside the engine-neutral frozen-set hash; an out-of-lock engine
+without a usable clean-source receipt is refused because the receipt is its
+only source provenance.
 """
 
 import argparse
 import hashlib
+import importlib
 import json
 import re
 import subprocess
@@ -150,6 +158,21 @@ def _baseline_hash(root: Path, ref: str) -> tuple[str | None, str | None]:
 # the attested set beyond registry pip: sources — the sim core whose code
 # decides physics and gate verdicts (ADR-24 resolved question 1)
 ATTESTED_SIM_CORE = ("genesis-world", "torch", "dora-rs", "pyarrow")
+# ADR-67: the distribution that actually steps the scene, per engine. The
+# core above is engine neutral, so a Nexus run used to attest genesis-world
+# and say nothing about the wheel whose solver produced the trajectories;
+# attested_set() adds the running engine's dist instead.
+ENGINE_DISTS = {
+    "genesis": ("genesis-world",),
+    "nexus": ("dimforge-nexus3d",),
+    # rapier steps the scene and the Nexus viewer renders it (ADR-68)
+    "rapier": ("rapier3d", "dimforge-nexus3d"),
+}
+#: The engine realization package (ADR-67, ADR-68): the engine selector, the
+#: Nexus and rapier backends, and their solver settings. Deliberately outside
+#: FROZEN_DIRS (widening the fence moves every Genesis env_hash and breaks
+#: the measured record's continuity), so it carries its own digest instead.
+SIM_REALIZATION_DIR = "src/aisle/sim"
 LOCK_FILE = "uv.lock"
 
 
@@ -234,8 +257,120 @@ def classify_direct_url(direct_url: dict) -> str | None:
     return None
 
 
-def attested_set(root: Path) -> list[str]:
-    return sorted(set(registry_pip_dists(root)) | set(map(canonical_name, ATTESTED_SIM_CORE)))
+def attested_set(root: Path, engine: str | None = None) -> list[str]:
+    """The dists whose provenance is checked. `engine` (ADR-67) adds the
+    running engine's own distribution; None keeps the pre-ADR-67 set."""
+    names = set(registry_pip_dists(root)) | set(map(canonical_name, ATTESTED_SIM_CORE))
+    names |= {canonical_name(d) for d in ENGINE_DISTS.get(engine or "", ())}
+    return sorted(names)
+
+
+def sim_realization_files(root: Path) -> list[Path]:
+    """Files under SIM_REALIZATION_DIR, sorted, __pycache__ excluded."""
+    base = root / SIM_REALIZATION_DIR
+    if not base.is_dir():
+        return []
+    return sorted(
+        (p for p in base.rglob("*") if p.is_file() and "__pycache__" not in p.parts),
+        key=lambda p: p.relative_to(root).as_posix(),
+    )
+
+
+def sim_engine_hash(root: Path, engine: str, build: dict | None = None) -> dict:
+    """ADR-67 engine attestation: the identity env_hash cannot carry.
+
+    One sha256 over the engine name, the realization package
+    (`src/aisle/sim/**`, which holds nexus_physics.toml's substeps, PGS
+    iterations, contact frequencies and friction rule) and the engine build
+    provenance. Two Nexus runs with different solver settings, or with the
+    same settings from different engine sources, differ here while their
+    env_hash is byte-identical; the manifest's `sim_engine` string alone
+    could not tell them apart.
+
+    `build` is the out-of-lock engine's build receipt, i.e.
+    `nexus_runtime.read_receipt(root)["receipt"]`, or None for an engine
+    that comes from the lock. Returns the facts for the run manifest:
+    {"engine", "sim_engine_hash", "n_files", "build"}; refusal policy is
+    the caller's (CON-8)."""
+    files = sim_realization_files(root)
+    digest = hashlib.sha256()
+    digest.update(engine.encode())
+    digest.update(b"\0")
+    for path in files:
+        digest.update(path.relative_to(root).as_posix().encode())
+        digest.update(b"\0")
+        # same framing as compute_env_hash: fixed-length per-file digests
+        digest.update(hashlib.sha256(path.read_bytes()).digest())
+    digest.update(json.dumps(build, sort_keys=True).encode())
+    return {
+        "engine": engine,
+        "sim_engine_hash": digest.hexdigest(),
+        "n_files": len(files),
+        "build": build,
+    }
+
+
+def _engine_build(root: Path, engine: str) -> dict | None:
+    """The engine's build receipt, read through the runtime tool's own reader
+    so the receipt format is never copied here (ADR-33's rule). Engines
+    that come from the lock have no receipt. The rapier engine renders
+    through the Nexus viewer, so both receipts describe its build."""
+    module = {"nexus": "nexus_runtime", "rapier": "rapier_runtime"}.get(engine)
+    if module is None:
+        return None
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        reader = importlib.import_module(module).read_receipt
+    except (ImportError, AttributeError):
+        return None
+    build = reader(root).get("receipt")
+    if engine == "rapier" and build is not None:
+        from nexus_runtime import read_receipt
+
+        build = {**build, "renderer": read_receipt(root).get("receipt")}
+    return build
+
+
+def _receipt_problem(receipt: object, *, label: str, source: str) -> str | None:
+    """Why one out-of-lock wheel receipt cannot identify its source bytes."""
+    if not isinstance(receipt, dict):
+        return f"{label} build receipt is missing or malformed"
+    if receipt.get("schema_version") != 1:
+        return f"{label} build receipt has an unsupported schema"
+    for field in ("wheel", "version", "platform"):
+        if not isinstance(receipt.get(field), str) or not receipt[field].strip():
+            return f"{label} build receipt has no {field}"
+    sources = receipt.get("sources")
+    if not isinstance(sources, dict) or source not in sources:
+        return f"{label} build receipt does not identify its {source} source"
+    for name, identified in sources.items():
+        if not isinstance(identified, dict):
+            return f"{label} build receipt has a malformed {name} source"
+        commit = identified.get("commit")
+        if not isinstance(commit, str) or re.fullmatch(r"[0-9a-f]{40}", commit) is None:
+            return f"{label} build receipt has no full commit for {name}"
+        if identified.get("dirty") is not False:
+            return f"{label} build receipt identifies a dirty {name} source"
+    return None
+
+
+def engine_build_problem(engine: str, build: object) -> str | None:
+    """Fail-closed provenance verdict for an engine's out-of-lock wheels.
+
+    Genesis comes from the uv lock and has no separate receipt. Nexus needs
+    one clean-source receipt; rapier needs both its solver receipt and the
+    nested Nexus renderer receipt (ADR-67/ADR-68, CON-5).
+    """
+    if engine == "genesis":
+        return None
+    if engine == "nexus":
+        return _receipt_problem(build, label="Nexus", source="nexus")
+    if engine == "rapier":
+        problem = _receipt_problem(build, label="rapier", source="rapier")
+        if problem is not None:
+            return problem
+        return _receipt_problem(build.get("renderer"), label="Nexus renderer", source="nexus")
+    return f"unknown simulation engine {engine!r}"
 
 
 def environment_inventory() -> dict:
@@ -263,7 +398,11 @@ def environment_inventory() -> dict:
 
 
 def dist_attestation(
-    root: Path, baseline_ref: str | None, extras: list[str], groups: list[str] | None = None
+    root: Path,
+    baseline_ref: str | None,
+    extras: list[str],
+    groups: list[str] | None = None,
+    engine: str | None = None,
 ) -> dict:
     """The ADR-24 D2 gate facts: fingerprint + problems (empty = attested)
     + the full environment inventory the post-session audit verifies
@@ -296,7 +435,7 @@ def dist_attestation(
                 "environment out of sync with the locked selection "
                 f"(uv sync --locked --check: {(sync.stderr or sync.stdout).strip()[-200:]})"
             )
-    for dist_name in attested_set(root):
+    for dist_name in attested_set(root, engine):
         try:
             dist = importlib.metadata.distribution(dist_name)
         except importlib.metadata.PackageNotFoundError:
@@ -411,6 +550,12 @@ def main() -> int:
         help="declared uv extras for the attestation selection (repeatable); "
         "with --check, enables the ADR-24 dist attestation",
     )
+    parser.add_argument(
+        "--sim-engine",
+        default=None,
+        help="ADR-67 engine (genesis|nexus|rapier): report the engine-specific "
+        "sim_engine_hash and attest that engine's own distribution",
+    )
     args = parser.parse_args()
 
     if args.verify_records:
@@ -436,6 +581,15 @@ def main() -> int:
 
     env_hash, n_files = compute_env_hash(args.root)
     report: dict = {"ok": True, "env_hash": env_hash, "n_files": n_files}
+    if args.sim_engine:
+        # ADR-67: the digest is recorded beside the engine-neutral env_hash.
+        # An out-of-lock engine must also carry the clean build receipt that
+        # is its only source provenance.
+        build = _engine_build(args.root, args.sim_engine)
+        report["sim"] = sim_engine_hash(args.root, args.sim_engine, build)
+        build_problem = engine_build_problem(args.sim_engine, build)
+        if build_problem is not None:
+            report.update(ok=False, error=build_problem, engine_build_problem=build_problem)
 
     if args.write:
         hash_path = args.root / HASH_FILE
@@ -467,7 +621,9 @@ def main() -> int:
             # ADR-24: attestation FACTS ride the same trusted-blob check;
             # refusal policy is the gate's (HAR-2)
             groups = [g for g in (args.groups or []) if g] if args.groups is not None else None
-            report["dist"] = dist_attestation(args.root, args.baseline, args.extras, groups)
+            report["dist"] = dist_attestation(
+                args.root, args.baseline, args.extras, groups, args.sim_engine
+            )
 
     print(json.dumps(report))
     if not report["ok"]:

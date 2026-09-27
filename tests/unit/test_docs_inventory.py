@@ -340,6 +340,42 @@ def test_bridge_is_found_by_module_path_not_node_id(tmp_path: Path):
     assert rows["bridgeless.yaml"]["scene"] == "—"
 
 
+def test_graph_table_names_the_physics_engine(tmp_path: Path):
+    """ADR-67, CON-5: a graph declaring `AISLE_SIM_ENGINE: nexus` runs
+    different physics, which is a different environment. Without the engine
+    column the generated inventory documented every graph as Genesis, and
+    the Nexus package did not exist anywhere in the layout map."""
+    graphs = tmp_path / "graphs"
+    graphs.mkdir(parents=True)
+    (graphs / "nexus.yaml").write_text(
+        "nodes:\n"
+        "  - id: sim-bridge\n"
+        "    path: ../src/aisle/nodes/dora_genesis.py\n"
+        "    env:\n"
+        "      AISLE_SIM_ENGINE: nexus\n"
+        "    outputs: [poses]\n",
+        encoding="utf-8",
+    )
+    (graphs / "default.yaml").write_text(
+        "nodes:\n  - id: sim-bridge\n    path: ../src/aisle/nodes/dora_genesis.py\n"
+        "    outputs: [poses]\n",
+        encoding="utf-8",
+    )
+    (graphs / "bridgeless.yaml").write_text(
+        "nodes:\n  - id: analysis-only\n    outputs: [report]\n", encoding="utf-8"
+    )
+
+    rows = {row["path"].name: row for row in inventory_module()._graph_inventory(tmp_path, None)}
+    assert rows["nexus.yaml"]["engine"] == "nexus"
+    assert rows["default.yaml"]["engine"] == "genesis (default)"
+    # no bridge => no engine declaration to report
+    assert rows["bridgeless.yaml"]["engine"] == "—"
+
+    text, _ = inventory_module().render_inventory(REPO_ROOT)
+    assert "| Engine |" in text
+    assert "sim engines" in text  # the layout map names the package
+
+
 def test_cli_section_refuses_a_root_it_cannot_introspect(tmp_path: Path):
     """--root is honoured for graphs/manifests/ADRs/tests but the CLI table is
     built from the IMPORTED package, which --root cannot redirect.

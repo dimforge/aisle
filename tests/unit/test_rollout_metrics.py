@@ -133,6 +133,9 @@ def test_rollout_relative_root_pins_absolute_paths_for_dora(tmp_path, monkeypatc
             "ok": True,
             "env_hash": "x",
             "sim_extra": "sim",
+            # ADR-67: the gate always resolves an engine; the runner now
+            # requires the key rather than defaulting to genesis
+            "sim_engine": "genesis",
             "sim_backend": "metal",
             "sim_device": "mps",
         },
@@ -334,6 +337,9 @@ def test_per_episode_wall_clamp_records_and_relaunches(tmp_path, monkeypatch):
             "ok": True,
             "env_hash": "x",
             "sim_extra": "sim",
+            # ADR-67: the gate always resolves an engine; the runner now
+            # requires the key rather than defaulting to genesis
+            "sim_engine": "genesis",
             "sim_backend": "metal",
             "sim_device": "mps",
         },
@@ -491,6 +497,9 @@ def test_relaunch_reaps_orphans_and_isolates_trace_dirs(tmp_path, monkeypatch):
             "ok": True,
             "env_hash": "x",
             "sim_extra": "sim",
+            # ADR-67: the gate always resolves an engine; the runner now
+            # requires the key rather than defaulting to genesis
+            "sim_engine": "genesis",
             "sim_backend": "metal",
             "sim_device": "mps",
         },
@@ -810,7 +819,11 @@ def test_rollout_refuses_behavioral_before_reserving_any_episodes(tmp_path, monk
     would still pass."""
     from aisle.harness import rollout as ro
 
-    monkeypatch.setattr(ro, "run_gates", lambda *a, **k: {"ok": True, "sim_backend": "genesis"})
+    monkeypatch.setattr(
+        ro,
+        "run_gates",
+        lambda *a, **k: {"ok": True, "sim_engine": "genesis", "sim_backend": "genesis"},
+    )
 
     def run(mode):
         return ro.rollout(
@@ -864,3 +877,137 @@ def test_authored_work_binding_is_refused(tmp_path):
         instrumented_graph(
             graph, REPO_ROOT, tmp_path, graph_snapshot=yaml.safe_dump(doc).encode(), work_launch=0
         )
+
+
+# -- HAR-1 operator progress ----------------------------------------------------
+
+
+def test_progress_report_distinguishes_build_from_running_episode():
+    """HAR-1 (operator feedback), CON-8 (stdout stays JSON): the periodic
+    stderr line names the phase — scene build before the first trace byte,
+    the running episode against its wall budget after — plus the last
+    verdict and the run deadline, so a long build reads differently from a
+    wedged episode."""
+    from aisle.harness.rollout import progress_report
+
+    building = progress_report(
+        now=100.0,
+        started=10.0,
+        deadline=1000.0,
+        lines=0,
+        episodes=2,
+        seeds=[0, 1],
+        last_line_t=10.0,
+        episode_grace_s=660.0,
+        traces_size=0,
+        last_record=None,
+    )
+    assert building.startswith("[rollout +1m30s]")
+    assert "episode 1/2 (seed 0): building the scene, no traces yet (1m30s)" in building
+    assert building.endswith("run deadline in 15m00s")
+
+    running = progress_report(
+        now=200.0,
+        started=10.0,
+        deadline=1000.0,
+        lines=1,
+        episodes=2,
+        seeds=[0, 1],
+        last_line_t=150.0,
+        episode_grace_s=240.0,
+        traces_size=3_100_000,
+        last_record={"episode": 0, "seed": 0, "status": "success", "failure": None, "t_end": 20.83},
+        relaunches=1,
+    )
+    assert "episode 2/2 (seed 1) running 50s of 4m00s wall budget, traces 3.1 MB" in running
+    assert "last: episode 0 seed 0 success at t=20.8s" in running
+    assert "relaunches 1" in running
+
+    failed = progress_report(
+        now=200.0,
+        started=10.0,
+        deadline=1000.0,
+        lines=2,
+        episodes=2,
+        seeds=[0, 1],
+        last_line_t=150.0,
+        episode_grace_s=240.0,
+        traces_size=10,
+        last_record={
+            "episode": 1,
+            "seed": 1,
+            "status": "fail",
+            "failure": "collision",
+            "t_end": 0.3,
+        },
+    )
+    assert "all 2 episodes recorded, waiting for the client to exit" in failed
+    assert "fail (collision) at t=0.3s" in failed
+
+
+def test_progress_interval_env_override():
+    """HAR-1: AISLE_ROLLOUT_PROGRESS_S sets the cadence, 0 disables, and a
+    malformed value is refused rather than silently muting the report."""
+    from aisle.harness.rollout import PROGRESS_INTERVAL_S, progress_interval_s
+
+    assert progress_interval_s({}) == PROGRESS_INTERVAL_S
+    assert progress_interval_s({"AISLE_ROLLOUT_PROGRESS_S": "5"}) == 5.0
+    assert progress_interval_s({"AISLE_ROLLOUT_PROGRESS_S": "0"}) == 0.0
+    with pytest.raises(ValueError, match="AISLE_ROLLOUT_PROGRESS_S"):
+        progress_interval_s({"AISLE_ROLLOUT_PROGRESS_S": "soon"})
+
+
+def test_timing_summary_weights_windows_and_reports_rtf():
+    """ADR-67: the manifest's `sim_timing` is the step- and frame-weighted
+    aggregate of the bridge's sidecar rows, with the real-time factor as sim
+    seconds over the wall seconds of the bridge's ticks. A tick already
+    contains the renders it triggered, so they must not be added again (PR
+    #594 review); the progress phrase omits what the engine did not report."""
+    from aisle.harness.rollout import summarize_timing, timing_phrase
+
+    rows = [
+        {
+            "engine": "nexus",
+            "steps": 100,
+            "step_ms_mean": 6.0,
+            "step_ms_max": 9.0,
+            "frames": 15,
+            "tick_ms_mean": 6.3,
+            "render_ms_mean": 2.0,
+            "gpu_ms_mean": 5.0,
+            "sim_window_s": 1.0,
+        },
+        {
+            "engine": "nexus",
+            "steps": 100,
+            "step_ms_mean": 8.0,
+            "step_ms_max": 12.0,
+            "frames": 15,
+            "tick_ms_mean": 8.6,
+            "render_ms_mean": 4.0,
+            "gpu_ms_mean": None,
+            "sim_window_s": 1.0,
+        },
+    ]
+    summary = summarize_timing(rows)
+    assert summary["steps"] == 200 and summary["frames"] == 30
+    assert summary["step_ms_mean"] == pytest.approx(7.0)
+    assert summary["step_ms_max"] == 12.0
+    assert summary["render_ms_mean"] == pytest.approx(3.0)
+    assert summary["tick_ms_mean"] == pytest.approx(7.45)
+    assert summary["gpu_ms_mean"] == pytest.approx(5.0)  # only the window that reported it
+    # 2 sim seconds over 1.49 s of ticks, whose renders are already inside
+    assert summary["rtf"] == pytest.approx(2.0 / 1.49, rel=1e-6)
+    # an older row with no tick: its renders are outside the step, so they count
+    legacy = [{k: v for k, v in rows[0].items() if k != "tick_ms_mean"}]
+    assert summarize_timing(legacy)["rtf"] == pytest.approx(1.0 / (0.6 + 0.03), rel=1e-6)
+    assert (
+        timing_phrase(summary)
+        == "physics 7.0 ms/step, tick 7.5 ms, gpu 5.0 ms, render 3.0 ms/frame, rtf 1.34x"
+    )
+    genesis = summarize_timing(
+        [{**rows[1], "engine": "genesis", "frames": 0, "render_ms_mean": None}]
+    )
+    assert genesis["gpu_ms_mean"] is None and genesis["render_ms_mean"] is None
+    assert timing_phrase(genesis) == "physics 8.0 ms/step, tick 8.6 ms, rtf 1.16x"
+    assert summarize_timing([]) == {} and timing_phrase({}) == ""

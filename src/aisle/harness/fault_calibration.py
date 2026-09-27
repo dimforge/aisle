@@ -206,10 +206,15 @@ def run_rung(
     perception: str,
     run_id: str,
     env: dict | None = None,
+    sim_engine: str | None = None,
 ) -> dict[str, Any]:
     """Materialize into a fresh git worktree at the clean commit and run the
     rollout there with --root so validation resolves the staged sources.
-    Returns the receipt, the rollout result, and the episode rows."""
+    Returns the receipt, the rollout result, and the episode rows.
+
+    sim_engine (ADR-67) is forwarded to the rollout so a calibration ladder
+    runs the engine the campaign selected, not whichever the runner defaults
+    to; None leaves the graph's own declaration in charge."""
     subprocess.run(
         ["git", "worktree", "add", "-q", "--detach", str(worktree), clean_commit],
         cwd=root,
@@ -244,6 +249,10 @@ def run_rung(
             "--run-id",
             run_id,
         ]
+        if sim_engine is not None:
+            from aisle.sim import normalize_engine
+
+            cmd += ["--sim-engine", normalize_engine(sim_engine)]
         proc = subprocess.run(
             cmd, cwd=root, capture_output=True, text=True, env={**os.environ, **(env or {})}
         )
@@ -329,6 +338,7 @@ def calibrate_bank(args, bank: dict) -> dict[str, Any]:
                 perception=args.perception,
                 run_id=run_id,
                 env=env,
+                sim_engine=getattr(args, "sim_engine", None),
             )
             raw_dest = Path(args.raw_store) / run_id
             if Path(outcome["run_dir"]).exists():

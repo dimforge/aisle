@@ -17,6 +17,14 @@ pytestmark = pytest.mark.unit
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.fixture(autouse=True)
+def engines_installed(monkeypatch):
+    """CI's unit tier syncs without the sim extra, so no engine is importable
+    and the gate would refuse on availability (ADR-67); these tests are about
+    the other gates. Engine refusal has its own tests."""
+    monkeypatch.setattr("aisle.sim.engine_available", lambda engine: True)
+
+
 def test_rollout_cli_exposes_the_attested_simulation_extra(monkeypatch):
     """HAR-1, CON-5: the public rollout path exposes the exact dependency
     selection; CUDA cannot be activated by an ambient hardware probe."""
@@ -141,9 +149,10 @@ def test_gate_attests_the_selected_sim_extra_and_backend(tmp_path, monkeypatch):
     monkeypatch.setattr(
         rollout_module,
         "resolve_sim_identity",
-        lambda extra: {
+        lambda extra, engine="genesis": {
             "ok": True,
             "sim_extra": extra,
+            "sim_engine": engine,
             "sim_backend": "cuda",
             "sim_device": "NVIDIA Test GPU",
         },
@@ -177,7 +186,7 @@ def test_gate_fails_closed_when_requested_backend_is_unavailable(tmp_path, monke
     monkeypatch.setattr(
         rollout_module,
         "resolve_sim_identity",
-        lambda extra: {
+        lambda extra, engine="genesis": {
             "ok": False,
             "gate": "sim_backend",
             "detail": "CUDA device unavailable",

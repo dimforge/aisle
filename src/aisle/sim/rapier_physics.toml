@@ -1,0 +1,87 @@
+# rapier-engine constants (ADR-68, SCN-2 spirit: no physics constants inline
+# in code). Kept outside the frozen scene directory for the same reason
+# nexus_physics.toml is: these describe how the rapier backend realizes the
+# frozen scene configuration, not the scene itself.
+#
+# The sections mirror nexus_physics.toml so a diff between the two engines is
+# readable. The Nexus-only scheduling knobs (friction_in_bias_pass,
+# implicit_coriolis, substep_refresh) have no rapier counterpart and are
+# absent; the camera and light blocks are copied verbatim, because rapier
+# renders through the Nexus viewer and must produce the same pixels.
+
+[sim]
+# rapier has no substep count; the analogous knob is the number of solver
+# iterations, each of which runs the internal PGS sweeps below. Two, the
+# like-for-like match to the Nexus configuration's substeps, lifts the box but
+# loses it in transport (T0 seed 0 closes `dropped` at 17.9 s, 80 degrees of
+# tilt); eight holds the pinch to 2.6 degrees and closes the episode at the
+# same 20.86 s as both other engines. At 0.2 ms per step the extra iterations
+# cost nothing worth saving.
+num_solver_iterations = 8
+num_internal_pgs_iterations = 8
+# Contact solver, the same targets as the Nexus backend: 240 Hz soft contacts
+# with 0.5 mm allowed penetration, so the pinch penetration stays at Genesis's
+# scale. Frequencies in Hz, lengths in meters.
+contact_natural_frequency = 240.0
+contact_damping_ratio = 5.0
+static_contact_natural_frequency = 480.0
+allowed_linear_error = 0.0005
+length_unit = 1.0
+warmstart_coefficient = 1.0
+# Genesis combines the friction of two touching geoms with max(); rapier's
+# default is the average. Match Genesis, as the Nexus backend does.
+friction_combine_rule = "max"
+# Single-threaded stepping: the island solver's work distribution is the only
+# run-to-run ordering variation rapier has, and CON-5 wants the reproducible
+# answer more than the parallel one on a scene this small.
+num_threads = 1
+
+[ground]
+# rapier has a half-space primitive, but the ground is built as the same fixed
+# slab the Nexus backend uses so both engines render the identical floor.
+size = [20.0, 20.0, 0.1]
+friction = 1.0
+color = [0.30, 0.33, 0.38, 1.0]
+checker_color = [0.42, 0.46, 0.52, 1.0]
+checker_squares = 40
+casts_shadows = false
+
+[robot]
+# Genesis's URDF defaults: joints without an explicit profile gain get these.
+# MJCF position actuators keep the gains declared in the model.
+default_kp = 100.0
+default_kv = 10.0
+# Per-DoF reflected rotor inertia and viscous damping for URDF joints, which
+# declare neither. The values the official SO-101 MJCF uses for its STS3215
+# servos, as on the Nexus backend.
+default_armature = 0.01
+default_damping = 0.1
+convex_hull = true
+
+[ik]
+# rapier solves IK by damped least squares, Genesis by Gauss-Newton, so
+# physics.toml's `max_solver_iters` does not mean the same thing on the two
+# engines; it stays the per-call iteration budget and these tune the step.
+# At rapier's default damping of 1.0, seed 3's omeprazole pre-grasp is still
+# 16 mm out after 100 iterations, just past the frozen 15 mm `pos_tol_m`;
+# 0.1 lands every desk seed well inside it at the same budget. The frozen
+# tolerances remain the acceptance gate (SCN-3).
+damping = 0.1
+# Residual at which the solver stops early, an order of magnitude under the
+# frozen tolerances so the gate, not the solver, decides.
+epsilon_linear = 0.00001
+epsilon_angular = 0.0001
+
+[camera]
+znear = 0.01
+zfar = 50.0
+background_rgba = [0.07, 0.08, 0.12, 1.0]
+msaa_samples = 4
+shadow_softness = 1.0
+shadow_first_cascade_m = 2.5
+shadow_distance_m = 20.0
+shadow_resolution = 4096
+shadow_atlas_layers = 4
+
+[light]
+direction = [0.3, -0.4, -1.0]
