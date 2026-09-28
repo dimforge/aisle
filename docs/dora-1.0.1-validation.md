@@ -37,7 +37,7 @@ lockstep conformance claim. The legacy fixture runs in free-run mode, while
 BRG-1 requires lockstep for acceptance; it also asserts TC-4's hardware
 wall-clock band instead of the specified simulation-rate/liveness rules.
 Per CON-13, those test changes are paused in
-[spec-conflict #497](https://github.com/teleworksai/aisle/issues/497).
+[spec-conflict #497](https://github.com/moxin-org/aisle/issues/497).
 
 The remaining throughput work is to resolve the fixture migration, then
 measure cold and warm starts separately with a capture boundary that includes
