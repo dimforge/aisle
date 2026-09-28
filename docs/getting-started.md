@@ -11,7 +11,7 @@ Install Git and rustup as well as Python >= 3.11, managed exclusively through
 ## 1. Install
 
 ```bash
-git clone https://github.com/heyong4725/aisle && cd aisle
+git clone https://github.com/teleworksai/aisle && cd aisle
 uv sync --extra sim --locked
 ```
 
@@ -71,7 +71,7 @@ uv run --extra sim --locked python tools/quickstart.py --runtime-prefix "$AISLE_
 This executes graph validation, a public task, bundle validation and reporting.
 The quickstart uses the `sim` extra; CUDA experiments use the manual rollout
 path below. The Linux clone and archive paths passed with verified source
-receipts in [run 34082153283](https://github.com/heyong4725/aisle/actions/runs/34082153283).
+receipts in [run 34082153283](https://github.com/teleworksai/aisle/actions/runs/34082153283).
 That evidence does not establish independent reproduction or release readiness.
 
 For manual harness and graph commands, make the verified binary available to

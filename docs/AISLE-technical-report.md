@@ -2840,25 +2840,25 @@ understood.
 
 | # | Gap | Why it matters | Section |
 |---|---|---|---|
-| [#264](https://github.com/heyong4725/aisle/issues/264) | Skill manifests record evidence but not **applicability** | As the library grows, undifferentiated same-capability entries make selection harder — the accumulation benefit can invert | §5.5 |
-| [#265](https://github.com/heyong4725/aisle/issues/265) | No **sandbox trust tier** | ADR-37's floor leaves an agent no legitimate way to declare an unproven node so its graph validates | §5.5 |
-| [#266](https://github.com/heyong4725/aisle/issues/266) | **Idea trees are not retained** | The pre-registrations that make findings falsifiable are gone; "3/4 expectations met" is currently unverifiable prose | §8.5 |
-| [#267](https://github.com/heyong4725/aisle/issues/267) | **SFT label undecided**: `joint_cmd` vs `joint_cmd_safe` | Structural safety and clean credit assignment pull against each other; must be settled before any fine-tune | §10.11 |
-| [#268](https://github.com/heyong4725/aisle/issues/268) | **No determinism layer for inference** | The staleness floor couples sim time to wall time, so a loaded host can change the trajectory with every seed identical | §10.11 |
-| [#269](https://github.com/heyong4725/aisle/issues/269) | **"Safe Learning" is undefined** in the project's own naming gloss | Students reasonably expect a training loop and find none | §3.5 |
+| [#264](https://github.com/teleworksai/aisle/issues/264) | Skill manifests record evidence but not **applicability** | As the library grows, undifferentiated same-capability entries make selection harder — the accumulation benefit can invert | §5.5 |
+| [#265](https://github.com/teleworksai/aisle/issues/265) | No **sandbox trust tier** | ADR-37's floor leaves an agent no legitimate way to declare an unproven node so its graph validates | §5.5 |
+| [#266](https://github.com/teleworksai/aisle/issues/266) | **Idea trees are not retained** | The pre-registrations that make findings falsifiable are gone; "3/4 expectations met" is currently unverifiable prose | §8.5 |
+| [#267](https://github.com/teleworksai/aisle/issues/267) | **SFT label undecided**: `joint_cmd` vs `joint_cmd_safe` | Structural safety and clean credit assignment pull against each other; must be settled before any fine-tune | §10.11 |
+| [#268](https://github.com/teleworksai/aisle/issues/268) | **No determinism layer for inference** | The staleness floor couples sim time to wall time, so a loaded host can change the trajectory with every seed identical | §10.11 |
+| [#269](https://github.com/teleworksai/aisle/issues/269) | **"Safe Learning" is undefined** in the project's own naming gloss | Students reasonably expect a training loop and find none | §3.5 |
 
 Refreshed 2026-09-14. All six gaps above have since closed (#264 and #265
 through ADR-41 and ADR-40; #267 and #268 on 2026-08-17). The current register:
 
 | # | Gap | Why it matters | Where |
 |---|---|---|---|
-| [#347](https://github.com/heyong4725/aisle/issues/347) | The **typed-vs-monolithic causal study is unrun**; pilot v8 is registered with collection pending on the session-bound confinement attestation (#589–#591) | It is the headline claim; every 4xx spec exists to make its result defensible | README status, ADR-66 |
-| [#346](https://github.com/heyong4725/aisle/issues/346) | **No perception-eligible task stratum**: the task-band calibration (v13) records BND-7 failed for the only candidate, 22 of 22 strata | Without an eligible non-oracle task, neither the pilot nor the confirmatory study has an instrument | SPEC 490 |
-| [#519](https://github.com/heyong4725/aisle/issues/519) | Matched-arm session admission and common evidence (MON-8/MON-12) not complete | Gate on every scored session in both arms | SPEC 420/440 |
-| [#483](https://github.com/heyong4725/aisle/issues/483)–[#486](https://github.com/heyong4725/aisle/issues/486) | **External reviews not arranged**: statistical (STA-12), terminology (CLM-12), independent reproduction (RPR-10/11), external benchmark user (BMK-21) | Confirmatory and release gates that no in-house work can satisfy | SPEC 400/410/530/540 |
-| [#562](https://github.com/heyong4725/aisle/issues/562) | No declared **halt contract** for motion nodes (bound, semantics, receipt); ADR-64 already makes a halt terminal | Required by SPEC 460/480/520 as an outcome, defined nowhere; parked until SPEC 460 ratifies or Phase 6 opens | SPEC 520 supplement |
-| [#566](https://github.com/heyong4725/aisle/issues/566) | Closed idea-tree entries persist but nothing **retrieves a refuted idea** at the moment of choosing | The failure-side half of "does prior work compound"; parked until an H3 rerun | ADR-41, HAR-7 |
-| [#356](https://github.com/heyong4725/aisle/issues/356) | **Hardware** entry gates (M1, judge fidelity) are GPU-gated; SO-101 driver is loopback-tested only | Every hardware claim stays `hardware_pending` | SPEC 520 |
+| [#347](https://github.com/teleworksai/aisle/issues/347) | The **typed-vs-monolithic causal study is unrun**; pilot v8 is registered with collection pending on the session-bound confinement attestation (#589–#591) | It is the headline claim; every 4xx spec exists to make its result defensible | README status, ADR-66 |
+| [#346](https://github.com/teleworksai/aisle/issues/346) | **No perception-eligible task stratum**: the task-band calibration (v13) records BND-7 failed for the only candidate, 22 of 22 strata | Without an eligible non-oracle task, neither the pilot nor the confirmatory study has an instrument | SPEC 490 |
+| [#519](https://github.com/teleworksai/aisle/issues/519) | Matched-arm session admission and common evidence (MON-8/MON-12) not complete | Gate on every scored session in both arms | SPEC 420/440 |
+| [#483](https://github.com/teleworksai/aisle/issues/483)–[#486](https://github.com/teleworksai/aisle/issues/486) | **External reviews not arranged**: statistical (STA-12), terminology (CLM-12), independent reproduction (RPR-10/11), external benchmark user (BMK-21) | Confirmatory and release gates that no in-house work can satisfy | SPEC 400/410/530/540 |
+| [#562](https://github.com/teleworksai/aisle/issues/562) | No declared **halt contract** for motion nodes (bound, semantics, receipt); ADR-64 already makes a halt terminal | Required by SPEC 460/480/520 as an outcome, defined nowhere; parked until SPEC 460 ratifies or Phase 6 opens | SPEC 520 supplement |
+| [#566](https://github.com/teleworksai/aisle/issues/566) | Closed idea-tree entries persist but nothing **retrieves a refuted idea** at the moment of choosing | The failure-side half of "does prior work compound"; parked until an H3 rerun | ADR-41, HAR-7 |
+| [#356](https://github.com/teleworksai/aisle/issues/356) | **Hardware** entry gates (M1, judge fidelity) are GPU-gated; SO-101 driver is loopback-tested only | Every hardware claim stays `hardware_pending` | SPEC 520 |
 
 Two threads remain owner-facing rather than contributor-facing: the eval's
 **seed set and episode count remain candidate-chosen** (the same self-grading

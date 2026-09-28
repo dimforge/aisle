@@ -3,7 +3,7 @@
 Date: 2026-08-31
 Status: ACTIVE planning program
 Umbrella tracker: [#359 — AISLE 10/10 project-quality
-program](https://github.com/heyong4725/aisle/issues/359)
+program](https://github.com/teleworksai/aisle/issues/359)
 
 ## Objective
 
@@ -24,21 +24,21 @@ simulation, statistics, safety, integrity, and release work can proceed now.
 
 | Dimension | Starting review | Objective exit gate | Issues |
 |---|---:|---|---|
-| Novelty and potential | 6/10 | Public versioned benchmark, blind evaluation, external user, and a defensible boundary against adjacent systems | [#357](https://github.com/heyong4725/aisle/issues/357), [#358](https://github.com/heyong4725/aisle/issues/358) |
-| Technical system quality | 7/10 | Equal-capability control, sealed evaluator, scoped actuation boundary, and adversarial instrument/safety tests | [#344](https://github.com/heyong4725/aisle/issues/344), [#348](https://github.com/heyong4725/aisle/issues/348), [#350](https://github.com/heyong4725/aisle/issues/350), [#353](https://github.com/heyong4725/aisle/issues/353), [#354](https://github.com/heyong4725/aisle/issues/354) |
-| Experimental rigor | 3/10 | Session-level estimands, power, replication, randomized blocks, uncertainty/equivalence, no-fault controls, and retained exclusions | [#345](https://github.com/heyong4725/aisle/issues/345), [#346](https://github.com/heyong4725/aisle/issues/346), [#347](https://github.com/heyong4725/aisle/issues/347), [#349](https://github.com/heyong4725/aisle/issues/349) |
-| Support for central claim | 2/10 | Replicated typed-dataflow versus monolithic causal study, with null/negative results accepted without reframing | [#344](https://github.com/heyong4725/aisle/issues/344), [#347](https://github.com/heyong4725/aisle/issues/347) |
-| Physical-AI relevance | 3/10 | Positive non-oracle result plus SO-101 physical validation and a live-fault operation cell | [#346](https://github.com/heyong4725/aisle/issues/346), [#356](https://github.com/heyong4725/aisle/issues/356) |
-| Reproducibility | 8/10 intent | Independent-machine reproduction, complete raw archive, one-command analysis, and DOI | [#353](https://github.com/heyong4725/aisle/issues/353), [#355](https://github.com/heyong4725/aisle/issues/355) |
-| Clarity and focus | 4/10 | Mechanically checked claim/evidence matrix and one canonical external architecture/status narrative | [#358](https://github.com/heyong4725/aisle/issues/358) |
+| Novelty and potential | 6/10 | Public versioned benchmark, blind evaluation, external user, and a defensible boundary against adjacent systems | [#357](https://github.com/teleworksai/aisle/issues/357), [#358](https://github.com/teleworksai/aisle/issues/358) |
+| Technical system quality | 7/10 | Equal-capability control, sealed evaluator, scoped actuation boundary, and adversarial instrument/safety tests | [#344](https://github.com/teleworksai/aisle/issues/344), [#348](https://github.com/teleworksai/aisle/issues/348), [#350](https://github.com/teleworksai/aisle/issues/350), [#353](https://github.com/teleworksai/aisle/issues/353), [#354](https://github.com/teleworksai/aisle/issues/354) |
+| Experimental rigor | 3/10 | Session-level estimands, power, replication, randomized blocks, uncertainty/equivalence, no-fault controls, and retained exclusions | [#345](https://github.com/teleworksai/aisle/issues/345), [#346](https://github.com/teleworksai/aisle/issues/346), [#347](https://github.com/teleworksai/aisle/issues/347), [#349](https://github.com/teleworksai/aisle/issues/349) |
+| Support for central claim | 2/10 | Replicated typed-dataflow versus monolithic causal study, with null/negative results accepted without reframing | [#344](https://github.com/teleworksai/aisle/issues/344), [#347](https://github.com/teleworksai/aisle/issues/347) |
+| Physical-AI relevance | 3/10 | Positive non-oracle result plus SO-101 physical validation and a live-fault operation cell | [#346](https://github.com/teleworksai/aisle/issues/346), [#356](https://github.com/teleworksai/aisle/issues/356) |
+| Reproducibility | 8/10 intent | Independent-machine reproduction, complete raw archive, one-command analysis, and DOI | [#353](https://github.com/teleworksai/aisle/issues/353), [#355](https://github.com/teleworksai/aisle/issues/355) |
+| Clarity and focus | 4/10 | Mechanically checked claim/evidence matrix and one canonical external architecture/status narrative | [#358](https://github.com/teleworksai/aisle/issues/358) |
 
 Safety is deliberately cross-cutting rather than hidden inside one score:
 
-- [#350](https://github.com/heyong4725/aisle/issues/350) defines and attacks the
+- [#350](https://github.com/teleworksai/aisle/issues/350) defines and attacks the
   agent-to-actuation threat boundary.
-- [#351](https://github.com/heyong4725/aisle/issues/351) separates topology,
+- [#351](https://github.com/teleworksai/aisle/issues/351) separates topology,
   kinematic enforcement, and empirical semantic outcomes.
-- [#352](https://github.com/heyong4725/aisle/issues/352) decides whether AISLE
+- [#352](https://github.com/teleworksai/aisle/issues/352) decides whether AISLE
   can support an identity-aware semantic authorization claim; otherwise H5 is
   permanently narrowed.
 
@@ -47,13 +47,13 @@ Safety is deliberately cross-cutting rather than hidden inside one score:
 ### Wave 0 — rules before results
 
 - [#345 — session-level statistics and power
-  analysis](https://github.com/heyong4725/aisle/issues/345)
+  analysis](https://github.com/teleworksai/aisle/issues/345)
 - [#353 — treatment integrity
-  v3](https://github.com/heyong4725/aisle/issues/353)
+  v3](https://github.com/teleworksai/aisle/issues/353)
 - [#354 — independent instrument audit and mutation
-  benchmark](https://github.com/heyong4725/aisle/issues/354)
+  benchmark](https://github.com/teleworksai/aisle/issues/354)
 - [#358 — claim-to-evidence matrix and architecture
-  narrative](https://github.com/heyong4725/aisle/issues/358)
+  narrative](https://github.com/teleworksai/aisle/issues/358)
 
 Exit: experimental units, claim scopes, treatment identity, audit expectations,
 and analysis decisions are mechanically explicit.
@@ -61,17 +61,17 @@ and analysis decisions are mechanically explicit.
 ### Wave 1 — build fair instruments
 
 - [#344 — equal-capability monolithic
-  control](https://github.com/heyong4725/aisle/issues/344)
+  control](https://github.com/teleworksai/aisle/issues/344)
 - [#346 — non-oracle reachable task
-  band](https://github.com/heyong4725/aisle/issues/346)
+  band](https://github.com/teleworksai/aisle/issues/346)
 - [#348 — sealed hidden fault bank and
-  injector](https://github.com/heyong4725/aisle/issues/348)
+  injector](https://github.com/teleworksai/aisle/issues/348)
 - [#350 — actuation threat model and bypass
-  validation](https://github.com/heyong4725/aisle/issues/350)
+  validation](https://github.com/teleworksai/aisle/issues/350)
 - [#351 — safety exposure and held-command
-  ablation](https://github.com/heyong4725/aisle/issues/351)
+  ablation](https://github.com/teleworksai/aisle/issues/351)
 - [#352 — semantic authorization
-  boundary](https://github.com/heyong4725/aisle/issues/352)
+  boundary](https://github.com/teleworksai/aisle/issues/352)
 
 Exit: expert parity, task reachability, blinding, confinement, and safety
 evidence gates pass before confirmatory data collection.
@@ -79,9 +79,9 @@ evidence gates pass before confirmatory data collection.
 ### Wave 2 — confirmatory campaigns
 
 - [#347 — replicated typed versus monolithic causal
-  study](https://github.com/heyong4725/aisle/issues/347)
+  study](https://github.com/teleworksai/aisle/issues/347)
 - [#349 — replicated typed-evidence versus logs-only fault
-  study](https://github.com/heyong4725/aisle/issues/349)
+  study](https://github.com/teleworksai/aisle/issues/349)
 
 Exit: analyzer-derived session-level treatment estimates, uncertainty, no-fault
 false-alarm measurements, and all exclusions are retained. A null or negative
@@ -90,11 +90,11 @@ result is a valid exit.
 ### Wave 3 — independent and physical closure
 
 - [#355 — independent-machine reproduction and DOI
-  artifact](https://github.com/heyong4725/aisle/issues/355)
+  artifact](https://github.com/teleworksai/aisle/issues/355)
 - [#356 — SO-101 physical benchmark and live-fault
-  operation](https://github.com/heyong4725/aisle/issues/356)
+  operation](https://github.com/teleworksai/aisle/issues/356)
 - [#357 — versioned public benchmark and blind evaluation
-  path](https://github.com/heyong4725/aisle/issues/357)
+  path](https://github.com/teleworksai/aisle/issues/357)
 
 Exit: an external operator can run and verify the benchmark without the
 original campaign machine, and physical claims rest on retained hardware
@@ -117,7 +117,7 @@ evidence.
 
 ## Completion
 
-Close [#359](https://github.com/heyong4725/aisle/issues/359) only after every
+Close [#359](https://github.com/teleworksai/aisle/issues/359) only after every
 child issue is complete or explicitly dispositioned with a narrower claim, the
 claim/evidence matrix has no unsupported headline claim, and an independent
 reviewer audits the completed program.
