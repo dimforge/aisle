@@ -59,6 +59,11 @@ sim = [
     # realistic verifier (VER-5, ADR-realistic-verifier D1): OWLv2 via
     # transformers, CPU inference only (D2) — CON-1: no CUDA-only pulls
     "transformers>=4.57.0",
+    # optional engines (ADR-67, ADR-68, ADR-70): the published Nexus wheel
+    # (webgpu) and rapier, which renders through it. Limited to the
+    # platforms dimforge-nexus3d ships wheels for.
+    "dimforge-nexus3d==0.2.0; (sys_platform == 'darwin' and platform_machine == 'arm64') or (sys_platform == 'linux' and platform_machine == 'x86_64') or (sys_platform == 'win32' and platform_machine == 'AMD64')",
+    "rapier3d==0.36.1; (sys_platform == 'darwin' and platform_machine == 'arm64') or (sys_platform == 'linux' and platform_machine == 'x86_64') or (sys_platform == 'win32' and platform_machine == 'AMD64')",
 ]
 # GPU build: same sim stack, torch resolved from the CUDA index (CON-1).
 # `uv sync --extra cuda` replaces `uv sync --extra sim`.

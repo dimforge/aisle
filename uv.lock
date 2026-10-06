@@ -3,26 +3,26 @@ revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version < '3.12' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and sys_platform == 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
-    "python_full_version < '3.12' and sys_platform == 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
-    "python_full_version >= '3.12' and sys_platform != 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
-    "python_full_version < '3.12' and sys_platform != 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
     "python_full_version >= '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
-    "python_full_version < '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and sys_platform == 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
+    "python_full_version >= '3.12' and sys_platform != 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
+    "python_full_version < '3.12' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version < '3.12' and sys_platform == 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
+    "python_full_version < '3.12' and sys_platform != 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
+    "python_full_version < '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
@@ -227,9 +227,11 @@ cuda = [
     { name = "transformers" },
 ]
 sim = [
+    { name = "dimforge-nexus3d", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
     { name = "dora-rs" },
     { name = "genesis-world" },
     { name = "pyarrow" },
+    { name = "rapier3d", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
     { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'linux' and extra == 'extra-5-aisle-sim') or (extra == 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim') or (extra == 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-vla')" },
     { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'linux' and extra == 'extra-5-aisle-sim') or (extra == 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim') or (extra == 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-vla')" },
     { name = "transformers" },
@@ -251,6 +253,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "dimforge-nexus3d", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'sim') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'sim') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra == 'sim')", specifier = "==0.2.0" },
     { name = "dora-rs", marker = "extra == 'cuda'", specifier = "==1.0.1" },
     { name = "dora-rs", marker = "extra == 'sim'", specifier = "==1.0.1" },
     { name = "genesis-world", marker = "extra == 'cuda'", specifier = ">=1.2.3" },
@@ -267,6 +270,7 @@ requires-dist = [
     { name = "pyarrow", marker = "extra == 'cuda'", specifier = ">=25.0.0" },
     { name = "pyarrow", marker = "extra == 'sim'", specifier = ">=25.0.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "rapier3d", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'sim') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'sim') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra == 'sim')", specifier = "==0.36.1" },
     { name = "torch", marker = "sys_platform == 'linux' and extra == 'cuda'", specifier = ">=2.13.0", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "aisle", extra = "cuda" } },
     { name = "torch", marker = "sys_platform == 'linux' and extra == 'sim'", specifier = ">=2.13.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "aisle", extra = "sim" } },
     { name = "torch", marker = "sys_platform == 'linux' and extra == 'vla'", specifier = ">=2.13.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "aisle", extra = "vla" } },
@@ -954,6 +958,17 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/17/4d/ac7ffa80c69ea1df30a8aa11b3578692a5118e7cd1aa157e3ef73b092d15/dill-0.3.8.tar.gz", hash = "sha256:3ebe3c479ad625c4553aca177444d89b486b1d84982eeacded644afc0cf797ca", size = 184847, upload-time = "2024-01-27T23:42:16.145Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c9/7a/cef76fd8438a42f96db64ddaa85280485a9c395e7df3db8158cfec1eee34/dill-0.3.8-py3-none-any.whl", hash = "sha256:c36ca9ffb54365bdd2f8eb3eff7d2a21237f8452b57ace88b1ac615b7e815bd7", size = 116252, upload-time = "2024-01-27T23:42:14.239Z" },
+]
+
+[[package]]
+name = "dimforge-nexus3d"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/48/d5/1167f734b6a47583d8b064571b95ca97f15bf9ebf14f2f54697a1084deaa/dimforge_nexus3d-0.2.0.tar.gz", hash = "sha256:6280824d3b63214aa8db06fbd27bee7f5aa184080a5593577a0a6a0d785eb476", size = 100179, upload-time = "2026-10-06T18:53:25.471Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1e/f4/b06bf31924efce880e391bd7153a77cec7e3f540d9e30957e54f014e43b3/dimforge_nexus3d-0.2.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:64f68f4d3895a85381311595b22138c221afb775670845ec76d967889db66301", size = 11995609, upload-time = "2026-10-06T18:53:17.587Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/ff/c35443c3d1d97f83b9c5a3d9884a7f5290eb37c79630000da3e61b4a70a2/dimforge_nexus3d-0.2.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:27f56f4cf45c2ffd3c7b54a6a89f15fa1e18e239847a32647c4854107be3b44e", size = 14610721, upload-time = "2026-10-06T18:53:20.604Z" },
+    { url = "https://files.pythonhosted.org/packages/68/8e/a04dc59c919357bb28e3e527cbd07ff58a50212e554710cb5ef3e526603e/dimforge_nexus3d-0.2.0-cp39-abi3-win_amd64.whl", hash = "sha256:ce4f5efec7511413990d0663a1366e4fedec73a321dfb53c2d75dce204d4471b", size = 12306079, upload-time = "2026-10-06T18:53:23.336Z" },
 ]
 
 [[package]]
@@ -3562,6 +3577,19 @@ wheels = [
 ]
 
 [[package]]
+name = "rapier3d"
+version = "0.36.1"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/09/75/404417210b79fbbd8f87e2a5b32b290c9ecdbc2a2b9ec4bebb18b2bae872/rapier3d-0.36.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:4f90d242f231d128af718295d9ab8ef3e526a6bb0d4fe5a0e0eefde0ad819e7d", size = 5105513, upload-time = "2026-10-06T19:23:55.565Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/e1/e82ce553c792238ba374ae539e09fe362588552d9edebabe990c0aa021c0/rapier3d-0.36.1-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:015883055a9f43bd400ca9d7944e1dd35d87c2609eb66c56011bd1732f1f307e", size = 5713821, upload-time = "2026-10-06T19:23:57.791Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/f0/7ac0d9ea98e1350b155ff14ee72d6459d57ef68a697047642bfb8c985731/rapier3d-0.36.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5cabbb375f73c9c9eae912c7e41ff3fca2be62e8c988dcbaa5754f2418fec3bb", size = 5615193, upload-time = "2026-10-06T19:23:59.672Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/4c/b2cc8c59e2d096502ea2ff211ecd0ceab89de2d2864af8f5e1b295a03cb3/rapier3d-0.36.1-cp39-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:f111b5f99208173299b8e91dfbdb45bd32d756b5bd09670281175cded64203c3", size = 5882810, upload-time = "2026-10-06T19:24:01.282Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/c9/024234f0f6c072748bcdc0d24297c66ef2e21a4e00e2ff07324e0dda9602/rapier3d-0.36.1-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:6c195c810fee3270de427cf0881cc5a36f03c7d48cc1a2e93c898d7295c3172c", size = 6107516, upload-time = "2026-10-06T19:24:03.012Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/05/f925ede82ee10f5de07430949f13352465a91a9e707bdee25c6486c97e35/rapier3d-0.36.1-cp39-abi3-win_amd64.whl", hash = "sha256:8a4c9a3eb561ed805b5d9fb5ae04d8d3a85990386c6c4049823965879d2b25cc", size = 4994219, upload-time = "2026-10-06T19:24:04.635Z" },
+]
+
+[[package]]
 name = "referencing"
 version = "0.37.0"
 source = { registry = "https://pypi.org/simple" }
@@ -4067,10 +4095,10 @@ version = "1.18.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
@@ -4241,10 +4269,10 @@ version = "2026.7.14"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
@@ -4302,17 +4330,17 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.12' and sys_platform != 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
-    "python_full_version < '3.12' and sys_platform != 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version >= '3.12' and sys_platform != 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
+    "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version < '3.12' and sys_platform != 'linux' and extra == 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim' and extra != 'extra-5-aisle-vla'",
     "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
@@ -4355,9 +4383,9 @@ version = "2.13.0+cpu"
 source = { registry = "https://download.pytorch.org/whl/cpu" }
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
+    "python_full_version >= '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
     "python_full_version < '3.12' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra == 'extra-5-aisle-sim'",
-    "python_full_version >= '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
     "python_full_version < '3.14' and sys_platform == 'linux' and extra != 'extra-5-aisle-cuda' and extra != 'extra-5-aisle-sim'",
 ]
 dependencies = [

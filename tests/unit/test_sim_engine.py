@@ -48,16 +48,18 @@ def test_unknown_engine_is_refused_not_defaulted():
 @pytest.mark.parametrize(
     ("sim_extra", "platform_name", "cuda_available", "expected"),
     [
-        ("sim", "Darwin", False, "metal"),
-        ("sim", "Darwin", True, "metal"),
+        ("sim", "Darwin", False, "webgpu"),
+        ("sim", "Darwin", True, "webgpu"),
         ("sim", "Linux", False, "webgpu"),
         ("sim", "Linux", True, "webgpu"),
         ("cuda", "Linux", True, "cuda"),
     ],
 )
 def test_select_nexus_backend(sim_extra, platform_name, cuda_available, expected):
-    """ADR-67: the portable extra never changes physics because a GPU is
-    visible; CUDA is the explicit Linux opt-in."""
+    """ADR-67, ADR-70: the portable extra never changes physics because a GPU
+    is visible, and selects webgpu everywhere because the published
+    dimforge-nexus3d wheel is built with that feature only; CUDA is the
+    explicit Linux opt-in."""
     assert select_nexus_backend(sim_extra, platform_name, cuda_available) == expected
 
 
