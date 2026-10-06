@@ -141,6 +141,8 @@ def test_nexus_physics_constants_are_declared():
     assert physics["sim"]["friction_combine_rule"] == "max"
     assert physics["sim"]["internal_pgs_iterations"] >= 1
     assert isinstance(physics["sim"]["implicit_coriolis"], bool)
+    # CON-5: same seed, same inputs, same machine give the same Nexus run
+    assert physics["sim"]["deterministic"] is True
     # render settings the Nexus viewer applies to its sensor cameras
     assert physics["camera"]["msaa_samples"] in (1, 4)
     assert 0.0 <= physics["camera"]["shadow_softness"] <= 1.0

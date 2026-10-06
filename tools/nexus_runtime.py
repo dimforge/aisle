@@ -69,11 +69,11 @@ def resolve_sources(
     Passing any path keeps the whole set local, so a developer working across
     sibling checkouts never gets a surprise mix of local and pinned sources
     (ADR-67). With none given, only nexus is fetched: its manifest takes rapier
-    from crates.io and patches kiss3d from git by rev, and cargo resolves both."""
+    and kiss3d from crates.io, and cargo resolves both."""
     if nexus is not None or rapier is not None or kiss3d is not None:
         return (nexus or ROOT.parent / "nexus", rapier, kiss3d)
-    # pinned build: cargo fetches rapier from crates.io and kiss3d from git
-    # by rev, so no local copy of either is needed
+    # pinned build: cargo fetches rapier and kiss3d from crates.io, so no
+    # local copy of either is needed
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from engine_sources import materialize
 

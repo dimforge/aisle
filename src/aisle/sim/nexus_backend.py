@@ -1031,6 +1031,10 @@ def _new_scene(engine: NexusEngine, physics: dict, n_envs: int, ambient) -> Nexu
         bool(sim.get("substep_refresh", True)),
         bool(sim.get("substep_refresh_light", False)),
     )
+    # the viewer reapplies its own setting to the state at every sync
+    deterministic = bool(sim.get("deterministic", False))
+    engine.viewer.set_deterministic(deterministic)
+    scene.state.set_deterministic(engine.viewer, deterministic)
     return scene
 
 

@@ -197,8 +197,8 @@ That fetches the pinned nexus commit into `.engine-sources/` (gitignored),
 builds with `maturin` (`--features metal` on macOS), installs the wheel with
 `uv pip`, and writes a receipt naming the commit it built. The rapier and
 kiss3d crates the engine links against are NOT fetched here: nexus's own
-Cargo manifest takes the published rapier 0.36.0 from crates.io and patches
-kiss3d from git by revision, so cargo resolves and caches both, and
+Cargo manifest takes the published rapier 0.36.0 and kiss3d 0.47 releases
+from crates.io, so cargo resolves and caches both, and
 `engine-runtime.json` does not pin them a second time.
 
 Working across local checkouts instead? Pass `--nexus ../nexus`. Any path
