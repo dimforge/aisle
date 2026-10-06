@@ -16,7 +16,7 @@ The engine wheels come from `uv.lock` like Genesis, so the environment
 attestation covers them too ([ADR-70](decisions/ADR-70.md)).
 
 The Nexus and Rapier wheels are published for macOS arm64, Linux x86_64 and
-Windows x64; the `sim` extra skips them on other platforms.
+aarch64, and Windows x64; the `sim` extra skips them on other platforms.
 
 ## Genesis
 
@@ -55,11 +55,13 @@ uv run --extra sim --locked harness rollout --graph graphs/expert_t0.yaml --tier
     --sim-engine nexus
 ```
 
-The published wheel is built with the `webgpu` feature, and wgpu picks the
-platform's native GPU API at runtime (Metal on macOS); the harness resolves
-`webgpu` on every platform. `AISLE_SIM_BACKEND` also accepts `metal`,
-`cuda` and `cpu`, but those need a wheel built with that feature, which the
-published one is not.
+The harness resolves native Metal on macOS and WebGPU elsewhere (wgpu then
+picks the platform's GPU API). The macOS wheel supports `metal`, `webgpu` and
+`cpu`; the Linux and Windows wheels `webgpu` and `cpu`
+(`nexus3d.available_backends()` lists them). `AISLE_SIM_BACKEND` overrides the
+choice; a backend the wheel lacks, such as `cuda`, fails at the first scene
+build. Determinism holds per backend: a Metal run and a WebGPU run of the same
+seed are not expected to match bit for bit.
 
 ## Rapier
 

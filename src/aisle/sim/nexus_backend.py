@@ -221,16 +221,8 @@ class NexusEngine:
         self.backend_name = backend_name
         self.headless = headless
         viewer = nexus3d.NexusViewer(64, 64, headless=headless)
-        if backend_name == "metal":
-            if not hasattr(viewer, "with_metal"):
-                raise RuntimeError("the installed nexus3d was built without the metal feature")
-            viewer = viewer.with_metal()
-        elif backend_name == "cuda":
-            if not hasattr(viewer, "with_cuda"):
-                raise RuntimeError("the installed nexus3d was built without the cuda feature")
-            viewer = viewer.with_cuda()
-        elif backend_name == "cpu":
-            viewer = viewer.with_cpu()
+        # raises ValueError for a backend the installed wheel was built without
+        viewer = viewer.with_backend(backend_name)
         viewer.init_backend()
         # one node per body: the depth and segmentation passes only see
         # non-instanced nodes, and per-body ids need them

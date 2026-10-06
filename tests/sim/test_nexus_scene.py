@@ -730,22 +730,6 @@ def test_debug_camera_attaches_after_build(live):
     assert np.asarray(handle.cams["overhead"].render(rgb=True)[0]).shape == (480, 640, 3)
 
 
-def _nexus_version() -> str | None:
-    from importlib.metadata import PackageNotFoundError, version
-
-    try:
-        return version("dimforge-nexus3d")
-    except PackageNotFoundError:
-        return None
-
-
-# ADR-70: dimforge-nexus3d 0.2.0 reads the joint velocities from a buffer
-# WebGPU refuses to copy (wgpu validation panic); fixed in nexus after 0.2.0.
-@pytest.mark.xfail(
-    _nexus_version() == "0.2.0",
-    reason="dimforge-nexus3d 0.2.0 cannot read multibody velocities back on WebGPU",
-    strict=True,
-)
 def test_zeroing_velocities_brings_the_arm_to_rest(live):
     """BRG-4/TC-6 on Nexus: the bridge calls `zero_all_dofs_velocity` on
     every reset, so it must leave the arm actually at rest (every link's

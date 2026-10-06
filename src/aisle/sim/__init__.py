@@ -67,12 +67,12 @@ def select_engine(env: Mapping[str, str] | None = None) -> str:
 
 def select_nexus_backend(sim_extra: str, platform_name: str, cuda_available: bool = False) -> str:
     """Nexus counterpart of `select_genesis_backend`: the portable ``sim``
-    selection maps to WebGPU on every platform, the only feature the locked
-    dimforge-nexus3d wheel is built with (ADR-70; wgpu runs it over Metal on
-    macOS); ``cuda`` is the Linux-only explicit opt-in and fails closed
+    selection maps to native Metal on macOS, which the locked
+    dimforge-nexus3d wheel is built with there (ADR-70), and WebGPU
+    elsewhere; ``cuda`` is the Linux-only explicit opt-in and fails closed
     without a device."""
     if sim_extra == "sim":
-        return "webgpu"
+        return "metal" if platform_name == "Darwin" else "webgpu"
     if sim_extra != "cuda":
         raise ValueError(f"unknown simulation extra {sim_extra!r}; expected 'sim' or 'cuda'")
     if platform_name != "Linux":

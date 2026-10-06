@@ -34,7 +34,8 @@ Things to know before anything else:
   output, which is also 1.0.1 for the corrected binary.
 
 Genesis is the default simulation engine. Nexus and rapier come with the same
-locked `sim` extra (on macOS arm64, Linux x86_64 and Windows x64); see the
+locked `sim` extra (on macOS arm64, Linux x86_64 and aarch64, and Windows
+x64); see the
 [simulation backend guide](simulation-backends.md) for a comparison and the
 selection path.
 
@@ -159,7 +160,8 @@ common cause).
 
 Genesis is the default and the only engine behind the measured record. The
 graphs can also run on [Nexus](https://github.com/dimforge/nexus) (GPU
-rigid bodies, over WebGPU) for development: the bridge picks the engine
+rigid bodies, native Metal on macOS and WebGPU elsewhere) for development:
+the bridge picks the engine
 from `AISLE_SIM_ENGINE`, which `harness rollout --sim-engine nexus` injects
 into the bridge node and records in the manifest. Results are not
 comparable across engines.
@@ -185,7 +187,8 @@ How far the Nexus path is actually exercised, as of today:
   [determinism](determinism.md) for what is and is not covered.
 
 Nexus is part of the lock (ADR-70): `uv sync --extra sim` installs the
-published `dimforge-nexus3d` wheel, built with the `webgpu` feature. Then:
+published `dimforge-nexus3d` wheel (WebGPU everywhere, plus native Metal
+on macOS). Then:
 
 ```bash
 uv run --extra sim --locked pytest -m sim tests/sim/test_nexus_scene.py
@@ -196,8 +199,10 @@ uv run --extra sim --locked harness rollout --graph graphs/expert_t0.yaml --tier
     --episodes 2 --seeds 0..1 --no-idea-gate --env-baseline local --sim-engine nexus
 ```
 
-`AISLE_SIM_BACKEND` accepts `metal`, `webgpu`, `cuda` or `cpu` for Nexus, but
-the published wheel supports `webgpu` (the default) and `cpu` only; the
+`AISLE_SIM_BACKEND` accepts `metal`, `webgpu`, `cuda` or `cpu` for Nexus, as
+far as the installed wheel supports them (`nexus3d.available_backends()`):
+the macOS wheel has `metal`, `webgpu` and `cpu`, the others `webgpu` and
+`cpu`; none has `cuda`. The
 [simulation backend guide](simulation-backends.md) covers development builds
 of unreleased Nexus changes.
 

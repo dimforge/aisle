@@ -239,8 +239,8 @@ uv run --extra sim --locked python tools/quickstart.py --runtime-prefix "$AISLE_
 ### Choose a simulation backend
 
 The `sim` extra installs Genesis, the default, and the optional Nexus and
-rapier engines (on macOS arm64, Linux x86_64 and Windows x64). Choose one with
-the same rollout flag:
+rapier engines (on macOS arm64, Linux x86_64 and aarch64, and Windows x64).
+Choose one with the same rollout flag:
 
 ```bash
 # Default, measured backend

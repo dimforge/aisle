@@ -2,7 +2,7 @@
 
 Status: PROPOSED — owner review required under CON-14, with ADR-67 and ADR-68.
 Amends: ADR-67 (scope, attestation) and ADR-68 (installation, pinning).
-Trigger: `dimforge-nexus3d` 0.2.0 and `rapier3d` 0.36.1 were published to PyPI
+Trigger: `dimforge-nexus3d` 0.2.1 and `rapier3d` 0.36.1 were published to PyPI
 with every binding AISLE uses.
 
 ## Context
@@ -17,15 +17,17 @@ wheels. ADR-67 named "the engines are installed from released versions inside
 the lock" as the first precondition for engine results entering the measured
 record.
 
-Both engines now have releases on PyPI. The Nexus wheel is built with its
-default `webgpu` feature only: it has no `with_metal` or `with_cuda`, and wheels
-exist for macOS arm64, Linux x86_64 and Windows x64 (rapier3d also covers Linux
-aarch64 and musl).
+Both engines now have releases on PyPI, with wheels for macOS arm64, Linux
+x86_64 and aarch64, and Windows x64 (rapier3d also covers musl). Every Nexus
+wheel has the WebGPU and CPU backends; the macOS wheel also has native Metal.
+`NexusViewer.with_backend(name)` selects one by name and raises `ValueError`
+for a backend the wheel lacks (`nexus3d.available_backends()` lists them). No
+published wheel has CUDA.
 
 ## Decision
 
 1. **The wheels are locked dependencies of the `sim` extra.**
-   `dimforge-nexus3d==0.2.0` and `rapier3d==0.36.1` join the `sim` extra in
+   `dimforge-nexus3d==0.2.1` and `rapier3d==0.36.1` join the `sim` extra in
    `pyproject.toml`, under a marker limited to the platforms Nexus ships wheels
    for (rapier renders through Nexus, so it follows the same set).
    `uv sync --extra sim` installs both; the CUDA extra does not, because the
@@ -43,10 +45,11 @@ aarch64 and musl).
    `uv sync --locked --check` selection check, and the PEP 610 record of every
    dist in the engine-aware attested set. The manifest keeps its
    `sim_engine_build` key, now `{"engine", "sim_engine_hash", "n_files"}`.
-4. **Nexus resolves `webgpu` on every platform.** `select_nexus_backend("sim",
-   ...)` returns `webgpu` on macOS too (it returned `metal`), since that is the
-   only GPU feature of the locked wheel. `metal`, `cuda` and `cpu` stay
-   accepted through `AISLE_SIM_BACKEND` for development builds.
+4. **Backends are selected by name.** `select_nexus_backend("sim", ...)` keeps
+   resolving native Metal on macOS and WebGPU elsewhere, and the Nexus backend
+   passes the name to `NexusViewer.with_backend`, so a backend the installed
+   wheel lacks (`cuda` on any published wheel) fails at the first scene build
+   with the wheel's own message instead of a `hasattr` probe.
 
 ## Consequences
 
@@ -56,16 +59,14 @@ aarch64 and musl).
   so neither engine enters the measured record yet.
 - `uv sync --extra sim` no longer removes the engines, and no install step
   remains beyond the sync.
-- Nexus runs on macOS step through wgpu over Metal instead of Nexus's native
-  Metal backend, and wgpu validates buffer usages where native Metal did not.
-  The published 0.2.0 reads multibody joint velocities from a buffer without
-  `COPY_SRC`, which panics on WebGPU. Only
-  `test_zeroing_velocities_brings_the_arm_to_rest` reads them, and it is a
-  strict expected failure on 0.2.0; the fix is on nexus branch
-  `fix-webgpu-readback-usages` and needs a release.
-- Determinism (`deterministic = true`) is per backend: two WebGPU runs replay
-  bit for bit, but a WebGPU run is not expected to match a native Metal run.
-- Platforms without a Nexus wheel (macOS x86_64, Linux aarch64) have Genesis
-  only; `--sim-engine nexus` or `rapier` refuses there at the `sim_engine` gate.
+- WebGPU validates buffer usages where native Metal does not. Nexus 0.2.0
+  read multibody joint velocities from a buffer without `COPY_SRC`, which
+  panicked on WebGPU; 0.2.1 fixes it, which is why the pin starts there.
+- Determinism (`deterministic = true`) is per backend: two runs on one
+  backend replay bit for bit, but a WebGPU run is not expected to match a
+  native Metal run of the same seed.
+- On a platform outside the marker the `sim` extra installs without the
+  engines, and `--sim-engine nexus` or `rapier` refuses at the `sim_engine`
+  gate. The CUDA extra does not include the engines either.
 - Editing `tools/env_hash.py` makes trusted runs refuse on this branch until it
   merges, so this lands as an env-change PR, not mid-campaign (ADR-67).
